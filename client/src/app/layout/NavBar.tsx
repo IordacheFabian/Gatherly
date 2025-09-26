@@ -14,6 +14,7 @@ import {
   Divider,
   Drawer,
   IconButton,
+  InputBase,
   List,
   ListItemButton,
   ListItemIcon,
@@ -25,6 +26,7 @@ import {
   useTheme,
   useMediaQuery,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 
 const pages = [
   { label: "Activities", icon: <HomeIcon fontSize="small" /> },
@@ -32,7 +34,11 @@ const pages = [
   { label: "Contact", icon: <ContactMailIcon fontSize="small" /> },
 ];
 
-export default function NavBar() {
+type Props = {
+  openForm: () => void;
+};
+
+export default function NavBar({ openForm }: Props) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [drawerOpen, setDrawerOpen] = React.useState(false);
@@ -49,8 +55,13 @@ export default function NavBar() {
         elevation={3}
         sx={{
           background:
-            "linear-gradient(135deg, rgba(24,42,115,0.95) 0%, rgba(33,138,174,0.95) 69%, rgba(32,167,172,0.95) 89%)",
-          backdropFilter: "saturate(140%) blur(6px)",
+            "linear-gradient(90deg, rgba(123,97,255,0.95) 0%, rgba(41,182,246,0.92) 70%)",
+          backdropFilter: "saturate(120%) blur(6px)",
+          // give the inner container a subtle rounded bottom to echo card corners
+          "& .MuiContainer-root": {
+            borderRadius: "0 0 12px 12px",
+            overflow: "visible",
+          },
         }}
       >
         <Container maxWidth="xl">
@@ -92,24 +103,58 @@ export default function NavBar() {
               </Box>
             )}
 
+            {/* desktop search (only visible on larger screens) */}
+            {!isMobile && (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  ml: 2,
+                  flex: 1,
+                  justifyContent: "center",
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    bgcolor: "rgba(255,255,255,0.06)",
+                    px: 1,
+                    py: 0.35,
+                    borderRadius: 3,
+                    width: 360,
+                    maxWidth: "50%",
+                  }}
+                >
+                  <SearchIcon sx={{ color: "rgba(255,255,255,0.75)", mr: 1 }} />
+                  <InputBase
+                    placeholder="Search activities…"
+                    sx={{ color: "inherit", width: "100%" }}
+                  />
+                </Box>
+              </Box>
+            )}
+
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Button
                 variant="contained"
                 color="secondary"
                 startIcon={<AddIcon />}
                 sx={{
-                  backgroundColor: "warning.main",
+                  background:
+                    "linear-gradient(90deg, #7b61ff 0%, #29b6f6 100%)",
                   color: "common.white",
                   borderRadius: 3,
                   textTransform: "none",
                   px: 2.2,
                   py: 0.8,
-                  boxShadow: "0 6px 18px rgba(33,138,174,0.18)",
+                  boxShadow: "0 8px 22px rgba(41,182,246,0.12)",
                   "&:hover": {
                     transform: "translateY(-1px)",
-                    boxShadow: "0 10px 24px rgba(33,138,174,0.22)",
+                    boxShadow: "0 12px 34px rgba(123,97,255,0.16)",
                   },
                 }}
+                onClick={openForm}
               >
                 Create activity
               </Button>

@@ -9,6 +9,7 @@ function App() {
   const [selectedActivity, setSelectedActivity] = useState<
     Activity | undefined
   >(undefined);
+  const [editMode, setEditMode] = useState(false);
 
   useEffect(() => {
     axios
@@ -26,16 +27,48 @@ function App() {
     setSelectedActivity(undefined);
   };
 
+  const handleOpenForm = (id?: string) => {
+    if (id) handleSelectAcitivity(id);
+    else handleCancelSelectActivity();
+    setEditMode(true);
+  };
+
+  const handleFormClose = () => {
+    setEditMode(false);
+  };
+
+  const handleFormSubmit = (activity: Activity) => {
+    if (activity.id) {
+      setActivities(
+        activities.map((x) => (x.id === activity.id ? activity : x))
+      );
+    } else {
+      const newActivity = { ...activity, id: activities.length.toString() };
+      setSelectedActivity(newActivity);
+      setActivities([...activities, { ...newActivity }]);
+    }
+    setEditMode(false);
+  };
+
+  const handleDelete = (id: string) => {
+    setActivities(activities.filter((x) => x.id !== id));
+  };
+
   return (
     <Box sx={{ bgcolor: "#eeeeee" }}>
       <CssBaseline />
-      <NavBar />
+      <NavBar openForm={handleOpenForm} />
       <Container maxWidth="xl" sx={{ mt: 3 }}>
         <ActivityDashboard
           activities={activities}
           selectActivity={handleSelectAcitivity}
           cancelSelectActivity={handleCancelSelectActivity}
           selectedActivity={selectedActivity}
+          editMode={editMode}
+          openForm={handleOpenForm}
+          closeForm={handleFormClose}
+          submitForm={handleFormSubmit}
+          deleteActivity={handleDelete}
         />
       </Container>
     </Box>
