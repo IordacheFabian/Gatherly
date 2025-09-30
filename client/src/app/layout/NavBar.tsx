@@ -91,6 +91,7 @@ export default function NavBar({ openForm }: Props) {
                     key={p.label}
                     color="inherit"
                     sx={{
+                      borderRadius: 3,
                       textTransform: "none",
                       fontWeight: 600,
                       color: "rgba(255,255,255,0.95)",

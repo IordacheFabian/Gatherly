@@ -18,26 +18,32 @@ import PlaceIcon from "@mui/icons-material/Place";
 import EditIcon from "@mui/icons-material/Edit";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import { useActivities } from "../../../lib/hooks/useActivities";
 
 type Props = {
-  activity: Activity;
+  selectedActivity: Activity;
   cancelSelectActivity: () => void;
   openForm: (id: string) => void;
 };
 
 export default function ActivityDetails({
-  activity,
+  selectedActivity,
   cancelSelectActivity,
   openForm,
 }: Props) {
   const formattedDate = (() => {
     try {
-      const d = new Date(activity.date);
-      return isNaN(d.getTime()) ? activity.date : d.toLocaleString();
+      const d = new Date(selectedActivity.date);
+      return isNaN(d.getTime()) ? selectedActivity.date : d.toLocaleString();
     } catch {
-      return activity.date;
+      return selectedActivity.date;
     }
   })();
+
+  const { activities } = useActivities();
+  const activity = activities?.find((x) => x.id === selectedActivity.id);
+
+  if (!activity) return <Typography>Loading...</Typography>;
 
   return (
     <Grow in timeout={360} style={{ transformOrigin: "top center" }}>

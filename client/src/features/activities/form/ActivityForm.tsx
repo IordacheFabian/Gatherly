@@ -14,19 +14,17 @@ import {
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import CloseIcon from "@mui/icons-material/Close";
 import type { FormEvent } from "react";
+import { useActivities } from "../../../lib/hooks/useActivities";
 
 type Props = {
   activity?: Activity;
   closeForm: () => void;
-  submitForm: (activity: Activity) => void;
 };
 
-export default function ActivityForm({
-  activity,
-  closeForm,
-  submitForm,
-}: Props) {
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+export default function ActivityForm({ activity, closeForm }: Props) {
+  const { updateActivity, createActivity } = useActivities();
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const formData = new FormData(event.currentTarget);
@@ -36,9 +34,14 @@ export default function ActivityForm({
       data[key] = value;
     });
 
-    if (activity) data.id = activity.id;
-
-    submitForm(data as unknown as Activity);
+    if (activity) {
+      data.id = activity.id;
+      await updateActivity.mutateAsync(data as unknown as Activity);
+      closeForm();
+    } else {
+      await createActivity.mutateAsync(data as unknown as Activity);
+      closeForm();
+    }
   };
 
   const categoryColors: Record<string, string> = {
@@ -105,7 +108,7 @@ export default function ActivityForm({
             <Button
               onClick={closeForm}
               startIcon={<CloseIcon />}
-              sx={{ textTransform: "none" }}
+              sx={{ textTransform: "none", borderRadius: 3 }}
             >
               Close
             </Button>
@@ -144,7 +147,11 @@ export default function ActivityForm({
               <TextField
                 name="date"
                 label="Date"
-                defaultValue={activity?.date}
+                defaultValue={
+                  activity?.date
+                    ? new Date(activity.date).toISOString().split("T")[0]
+                    : new Date().toISOString().split("T")[0]
+                }
                 type="date"
                 InputLabelProps={{ shrink: true }}
                 fullWidth
@@ -194,6 +201,7 @@ export default function ActivityForm({
                     background: "linear-gradient(90deg, #29b6f6, #7b61ff)",
                   },
                 }}
+                disabled={updateActivity.isPending || createActivity.isPending}
               >
                 Submit
               </Button>
