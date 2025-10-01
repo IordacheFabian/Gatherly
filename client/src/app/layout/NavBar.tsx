@@ -27,18 +27,20 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import { NavLink } from "react-router";
 
 const pages = [
-  { label: "Activities", icon: <HomeIcon fontSize="small" /> },
+  {
+    label: "Activities",
+    icon: <HomeIcon fontSize="small" />,
+    component: NavLink,
+    to: "/activities",
+  },
   { label: "About", icon: <InfoIcon fontSize="small" /> },
   { label: "Contact", icon: <ContactMailIcon fontSize="small" /> },
 ];
 
-type Props = {
-  openForm: () => void;
-};
-
-export default function NavBar({ openForm }: Props) {
+export default function NavBar() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [drawerOpen, setDrawerOpen] = React.useState(false);
@@ -75,8 +77,8 @@ export default function NavBar({ openForm }: Props) {
               <Typography
                 variant="h5"
                 fontWeight="700"
-                component="a"
-                href="/"
+                component={NavLink}
+                to="/"
                 sx={{ color: "inherit", textDecoration: "none" }}
               >
                 Reactivities
@@ -86,21 +88,45 @@ export default function NavBar({ openForm }: Props) {
             {/* center nav (hidden on small screens) */}
             {!isMobile && (
               <Box sx={{ display: "flex", gap: 3, alignItems: "center" }}>
-                {pages.map((p) => (
-                  <Button
-                    key={p.label}
-                    color="inherit"
-                    sx={{
-                      borderRadius: 3,
-                      textTransform: "none",
-                      fontWeight: 600,
-                      color: "rgba(255,255,255,0.95)",
-                    }}
-                    startIcon={p.icon}
-                  >
-                    {p.label}
-                  </Button>
-                ))}
+                <Button
+                  color="inherit"
+                  sx={{
+                    borderRadius: 3,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    color: "rgba(255,255,255,0.95)",
+                  }}
+                  startIcon={<HomeIcon fontSize="small" />}
+                  component={NavLink}
+                  to="/activities"
+                >
+                  Activities
+                </Button>
+
+                <Button
+                  color="inherit"
+                  sx={{
+                    borderRadius: 3,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    color: "rgba(255,255,255,0.95)",
+                  }}
+                  startIcon={<InfoIcon fontSize="small" />}
+                >
+                  About
+                </Button>
+                <Button
+                  color="inherit"
+                  sx={{
+                    borderRadius: 3,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    color: "rgba(255,255,255,0.95)",
+                  }}
+                  startIcon={<ContactMailIcon fontSize="small" />}
+                >
+                  Contact
+                </Button>
               </Box>
             )}
 
@@ -155,7 +181,8 @@ export default function NavBar({ openForm }: Props) {
                     boxShadow: "0 12px 34px rgba(123,97,255,0.16)",
                   },
                 }}
-                onClick={openForm}
+                component={NavLink}
+                to="/createActivity"
               >
                 Create activity
               </Button>
@@ -222,75 +249,3 @@ export default function NavBar({ openForm }: Props) {
     </>
   );
 }
-
-// **** OLD CODE ****
-
-// import { Group } from "@mui/icons-material";
-// import {
-//   AppBar,
-//   Box,
-//   Button,
-//   Container,
-//   MenuItem,
-//   Toolbar,
-//   Typography,
-// } from "@mui/material";
-
-// export default function NavBar() {
-//   return (
-//     <Box sx={{ flexGrow: 1 }}>
-//       <AppBar
-//         position="static"
-//         sx={{
-//           backgroundImage:
-//             "linear-gradient(135deg, #182a73 0%, #218aae 69%, #20a7ac 89%)",
-//         }}
-//       >
-//         <Container maxWidth="xl">
-//           <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-//             <Box>
-//               <MenuItem sx={{ display: "flex", gap: 2 }}>
-//                 <Group fontSize="large" />
-//                 <Typography variant="h4" fontWeight="bold">
-//                   Reactivities
-//                 </Typography>
-//               </MenuItem>
-//             </Box>
-//             <Box sx={{ display: "flex" }}>
-//               <MenuItem
-//                 sx={{
-//                   fontSize: "1.2rem",
-//                   textTransform: "uppercase",
-//                   fontWeight: "bold",
-//                 }}
-//               >
-//                 Activities
-//               </MenuItem>
-//               <MenuItem
-//                 sx={{
-//                   fontSize: "1.2rem",
-//                   textTransform: "uppercase",
-//                   fontWeight: "bold",
-//                 }}
-//               >
-//                 About
-//               </MenuItem>
-//               <MenuItem
-//                 sx={{
-//                   fontSize: "1.2rem",
-//                   textTransform: "uppercase",
-//                   fontWeight: "bold",
-//                 }}
-//               >
-//                 Contact
-//               </MenuItem>
-//             </Box>
-//             <Button size="large" variant="contained" color="warning">
-//               Create activity
-//             </Button>
-//           </Toolbar>
-//         </Container>
-//       </AppBar>
-//     </Box>
-//   );
-// }

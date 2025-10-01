@@ -18,35 +18,50 @@ import PlaceIcon from "@mui/icons-material/Place";
 import EditIcon from "@mui/icons-material/Edit";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+// import { useEffect, useRef } from "react";
+import { Link, useNavigate, useParams } from "react-router";
 import { useActivities } from "../../../lib/hooks/useActivities";
 
-type Props = {
-  selectedActivity: Activity;
-  cancelSelectActivity: () => void;
-  openForm: (id: string) => void;
-};
+export default function ActivityDetails() {
+  // const containerRef = useRef<HTMLDivElement | null>(null);
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const { activity, isLoadingActivity } = useActivities(id);
 
-export default function ActivityDetails({
-  selectedActivity,
-  cancelSelectActivity,
-  openForm,
-}: Props) {
+  // scroll the detail into view when it mounts / when selected activity changes
+  // useEffect(() => {
+  //   const el = containerRef.current;
+  //   if (!el) return;
+  //   // small delay to allow Grow animation/layout
+  //   const id = setTimeout(() => {
+  //     // offset to account for a possible sticky NavBar (adjust value if needed)
+  //     const navOffset = 72;
+  //     const top = el.getBoundingClientRect().top + window.scrollY - navOffset;
+  //     window.scrollTo({ top, behavior: "smooth" });
+  //   }, 60);
+  //   return () => clearTimeout(id);
+  // }, [activity?.id]);
+
   const formattedDate = (() => {
+    if (!activity || !activity.date) return "";
     try {
-      const d = new Date(selectedActivity.date);
-      return isNaN(d.getTime()) ? selectedActivity.date : d.toLocaleString();
+      const d = new Date(activity.date);
+      return isNaN(d.getTime()) ? activity.date : d.toLocaleString();
     } catch {
-      return selectedActivity.date;
+      return activity.date;
     }
   })();
 
-  const { activities } = useActivities();
-  const activity = activities?.find((x) => x.id === selectedActivity.id);
+  // const { activities } = useActivities();
+  // const activity = activities?.find((x) => x.id === selectedActivity.id);
 
-  if (!activity) return <Typography>Loading...</Typography>;
+  if (isLoadingActivity) return <Typography>Loading...</Typography>;
+
+  if (!activity) return <Typography>Activity not found</Typography>;
 
   return (
     <Grow in timeout={360} style={{ transformOrigin: "top center" }}>
+      {/* <div ref={containerRef}> */}
       <Card sx={{ borderRadius: 3, overflow: "hidden", boxShadow: 3 }}>
         <Box
           sx={{
@@ -152,13 +167,14 @@ export default function ActivityDetails({
                 background: "linear-gradient(90deg, #29B6F6, #7B61FF)",
               },
             }}
-            onClick={() => openForm(activity.id)}
+            component={Link}
+            to={`/manage/${activity.id}`}
           >
             Edit
           </Button>
           <Button
             startIcon={<ArrowBackIcon />}
-            onClick={cancelSelectActivity}
+            onClick={() => navigate("/activities")}
             variant="contained"
             color="secondary"
             sx={{
@@ -178,6 +194,7 @@ export default function ActivityDetails({
           </Button>
         </CardActions>
       </Card>
+      {/* </div> */}
     </Grow>
   );
 }

@@ -15,14 +15,13 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import CloseIcon from "@mui/icons-material/Close";
 import type { FormEvent } from "react";
 import { useActivities } from "../../../lib/hooks/useActivities";
+import { useNavigate, useParams } from "react-router";
 
-type Props = {
-  activity?: Activity;
-  closeForm: () => void;
-};
-
-export default function ActivityForm({ activity, closeForm }: Props) {
-  const { updateActivity, createActivity } = useActivities();
+export default function ActivityForm() {
+  const { id } = useParams();
+  const { updateActivity, createActivity, activity, isLoadingActivity } =
+    useActivities(id);
+  const navigate = useNavigate();
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -37,12 +36,17 @@ export default function ActivityForm({ activity, closeForm }: Props) {
     if (activity) {
       data.id = activity.id;
       await updateActivity.mutateAsync(data as unknown as Activity);
-      closeForm();
+      navigate(`/activities/${activity.id}`);
     } else {
-      await createActivity.mutateAsync(data as unknown as Activity);
-      closeForm();
+      createActivity.mutate(data as unknown as Activity, {
+        onSuccess: (id) => {
+          navigate(`/activities/${id}`);
+        },
+      });
     }
   };
+
+  if (isLoadingActivity) return <Typography>Loading activity...</Typography>;
 
   const categoryColors: Record<string, string> = {
     music: "#7b61ff",
@@ -106,7 +110,6 @@ export default function ActivityForm({ activity, closeForm }: Props) {
               }}
             />
             <Button
-              onClick={closeForm}
               startIcon={<CloseIcon />}
               sx={{ textTransform: "none", borderRadius: 3 }}
             >
@@ -180,11 +183,7 @@ export default function ActivityForm({ activity, closeForm }: Props) {
                 mt: 1,
               }}
             >
-              <Button
-                onClick={closeForm}
-                sx={{ textTransform: "none" }}
-                variant="outlined"
-              >
+              <Button sx={{ textTransform: "none" }} variant="outlined">
                 Cancel
               </Button>
               <Button

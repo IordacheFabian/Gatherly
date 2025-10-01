@@ -20,13 +20,13 @@ import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useActivities } from "../../../lib/hooks/useActivities";
+import { Link } from "react-router";
 
 type Props = {
   activity: Activity;
-  selectActivity: (id: string) => void;
 };
 
-export default function ActivityCard({ activity, selectActivity }: Props) {
+export default function ActivityCard({ activity }: Props) {
   const { deleteActivity } = useActivities();
 
   const [removing, setRemoving] = useState(false);
@@ -242,7 +242,8 @@ export default function ActivityCard({ activity, selectActivity }: Props) {
                   boxShadow: "0 12px 30px rgba(41,182,246,0.24)",
                 },
               }}
-              onClick={() => selectActivity(activity.id)}
+              component={Link}
+              to={`/activities/${activity.id}`}
             >
               View
             </Button>
