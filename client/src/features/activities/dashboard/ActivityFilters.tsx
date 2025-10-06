@@ -47,7 +47,12 @@ export default function ActivityFilters() {
 
   return (
     <Grow in appear timeout={400}>
-      <Card sx={{ borderRadius: 3, overflow: "hidden" }}>
+      <Card
+        sx={{
+          borderRadius: 3,
+          overflow: "hidden",
+        }}
+      >
         <CardHeader
           title={<Typography variant="h6">Filters</Typography>}
           avatar={<FilterList sx={{ color: "#fff" }} />}

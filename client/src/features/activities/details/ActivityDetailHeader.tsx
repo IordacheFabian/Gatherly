@@ -130,7 +130,7 @@ export default function ActivityDetailsHeader({ activity }: Props) {
 
               <Button
                 component={Link}
-                to={`/manage/activityId`}
+                to={`/manage/${activity.id}`}
                 sx={{
                   background: "linear-gradient(90deg,#7b61ff,#29b6f6)",
                   color: "#fff",

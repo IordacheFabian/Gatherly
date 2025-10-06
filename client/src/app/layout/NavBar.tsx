@@ -127,6 +127,19 @@ export default function NavBar() {
                 >
                   Contact
                 </Button>
+                <Button
+                  color="inherit"
+                  sx={{
+                    borderRadius: 3,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    color: "rgba(255,255,255,0.95)",
+                  }}
+                  component={NavLink}
+                  to="/errors"
+                >
+                  Errors
+                </Button>
               </Box>
             )}
 
@@ -187,9 +200,11 @@ export default function NavBar() {
                 Create activity
               </Button>
 
-              <IconButton onClick={openProfile} sx={{ ml: 1 }}>
-                <Avatar sx={{ width: 36, height: 36 }}>U</Avatar>
-              </IconButton>
+              {!isMobile && (
+                <IconButton onClick={openProfile} sx={{ ml: 1 }}>
+                  <Avatar sx={{ width: 36, height: 36 }}>U</Avatar>
+                </IconButton>
+              )}
 
               {isMobile && (
                 <IconButton color="inherit" onClick={() => setDrawerOpen(true)}>
