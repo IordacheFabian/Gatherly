@@ -17,6 +17,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { Link } from "react-router";
+import type { Activity } from "../../../lib/types";
 
 type Props = {
   activity: Activity;
@@ -45,12 +46,12 @@ export default function ActivityCard({ activity }: Props) {
     travel: "#29b6f6",
   };
 
-  const formattedDate = (() => {
+  const formattedDate: string = (() => {
     try {
       const d = new Date(activity.date);
-      return isNaN(d.getTime()) ? activity.date : d.toLocaleString();
+      return isNaN(d.getTime()) ? String(activity.date) : d.toLocaleString();
     } catch {
-      return activity.date;
+      return String(activity.date);
     }
   })();
 
@@ -146,7 +147,7 @@ export default function ActivityCard({ activity }: Props) {
                 overflow: "hidden",
               }}
             >
-              {/* {activity.description} */}
+              {activity.description}
 
               <Box>
                 {(isHost || isGoing) && (

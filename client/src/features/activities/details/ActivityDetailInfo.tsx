@@ -8,7 +8,11 @@ import {
   Typography,
   Chip,
   useTheme,
+  Button,
 } from "@mui/material";
+import type { Activity } from "../../../lib/types";
+import { useState } from "react";
+import MapComponent from "../../../app/shared/components/MapComponent";
 
 type Props = {
   activity: Activity;
@@ -16,6 +20,7 @@ type Props = {
 
 export default function ActivityDetailsInfo({ activity }: Props) {
   const theme = useTheme();
+  const [mapOpen, setMapOpen] = useState(false);
 
   return (
     <Card sx={{ mb: 2, borderRadius: 2, boxShadow: 2 }}>
@@ -62,8 +67,31 @@ export default function ActivityDetailsInfo({ activity }: Props) {
                 {activity.venue}, {activity.city}
               </Typography>
             </Box>
+            <Button
+              onClick={() => setMapOpen(!mapOpen)}
+              sx={{
+                background: "linear-gradient(90deg,#7b61ff,#29b6f6)",
+                borderRadius: 3,
+                color: "#fff",
+                fontSize: 11,
+                ":hover": {
+                  background: "linear-gradient(0deg,#7b61ff,#29b6f6)",
+                  fontSize: 11.2,
+                },
+              }}
+            >
+              {mapOpen ? "Hide Map" : "Show Map"}
+            </Button>
             <Chip label="In person" size="small" sx={{ ml: 1 }} />
           </Box>
+          {mapOpen && (
+            <Box sx={{ height: 200, zIndex: 1000, display: "block" }}>
+              <MapComponent
+                position={[activity.latitude, activity.longitude]}
+                venue={activity.venue}
+              />
+            </Box>
+          )}
         </Stack>
       </CardContent>
     </Card>

@@ -186,8 +186,8 @@ export default function NavBar() {
                   color: "common.white",
                   borderRadius: 3,
                   textTransform: "none",
-                  px: 2.2,
-                  py: 0.8,
+                  px: 3,
+                  py: 0.2,
                   boxShadow: "0 8px 22px rgba(41,182,246,0.12)",
                   "&:hover": {
                     transform: "translateY(-1px)",

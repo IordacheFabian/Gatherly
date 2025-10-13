@@ -12,6 +12,7 @@ import {
 import { Link } from "react-router";
 import CancelIcon from "@mui/icons-material/Cancel";
 import EventBusyIcon from "@mui/icons-material/EventBusy";
+import type { Activity } from "../../../lib/types";
 
 type Props = {
   activity: Activity;

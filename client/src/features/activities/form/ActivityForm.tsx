@@ -7,42 +7,69 @@ import {
   CardContent,
   Grow,
   Stack,
-  TextField,
   Typography,
   Chip,
 } from "@mui/material";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import CloseIcon from "@mui/icons-material/Close";
-import type { FormEvent } from "react";
 import { useActivities } from "../../../lib/hooks/useActivities";
 import { useNavigate, useParams } from "react-router";
+import { useForm } from "react-hook-form";
+import { useEffect } from "react";
+import {
+  activitySchema,
+  type ActivitySchema,
+} from "../../../lib/schemas/activitySchema";
+import TextInput from "../../../app/shared/components/TextInput";
+import SelectInput from "../../../app/shared/components/SelectInput";
+import { categoryOptions } from "./categoryOptions";
+import LocationInput from "../../../app/shared/components/LocationInput";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 export default function ActivityForm() {
+  const { control, reset, handleSubmit } = useForm<ActivitySchema>({
+    mode: "onTouched",
+    resolver: zodResolver(activitySchema),
+  });
+
+  const navigate = useNavigate();
   const { id } = useParams();
   const { updateActivity, createActivity, activity, isLoadingActivity } =
     useActivities(id);
-  const navigate = useNavigate();
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const formData = new FormData(event.currentTarget);
-
-    const data: { [key: string]: FormDataEntryValue } = {};
-    formData.forEach((value, key) => {
-      data[key] = value;
-    });
-
+  useEffect(() => {
     if (activity) {
-      data.id = activity.id;
-      await updateActivity.mutateAsync(data as unknown as Activity);
-      navigate(`/activities/${activity.id}`);
-    } else {
-      createActivity.mutate(data as unknown as Activity, {
-        onSuccess: (id) => {
-          navigate(`/activities/${id}`);
+      reset({
+        ...activity,
+        location: {
+          city: activity.city,
+          venue: activity.venue,
+          latitude: activity.latitude,
+          longitude: activity.longitude,
         },
       });
+    }
+  }, [activity, reset]);
+
+  const onSubmit = async (data: ActivitySchema) => {
+    const { location, ...rest } = data;
+    const flattenedData = { ...rest, ...location };
+
+    try {
+      if (activity) {
+        updateActivity.mutate(
+          { ...activity, ...flattenedData },
+          {
+            onSuccess: () => navigate(`/activities/${activity.id}`),
+          }
+        );
+      } else {
+        createActivity.mutate(flattenedData, {
+          onSuccess: (id) => navigate(`/activities/${id}`),
+        });
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -121,33 +148,30 @@ export default function ActivityForm() {
         <CardContent>
           <Box
             component="form"
-            onSubmit={handleSubmit}
+            onSubmit={handleSubmit(onSubmit)}
             display="flex"
             flexDirection="column"
             gap={3}
           >
-            <TextField
-              name="title"
-              label="Title"
-              defaultValue={activity?.title}
-              fullWidth
-            />
-            <TextField
-              name="description"
+            <TextInput label="Title" control={control} name="title" />
+            <TextInput
+              control={control}
               label="Description"
-              defaultValue={activity?.description}
+              name="description"
               multiline
               rows={4}
               fullWidth
             />
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-              <TextField
-                name="category"
+              <SelectInput
+                control={control}
                 label="Category"
-                defaultValue={activity?.category}
+                name="category"
                 fullWidth
+                items={categoryOptions}
               />
-              <TextField
+              <TextInput
+                control={control}
                 name="date"
                 label="Date"
                 defaultValue={
@@ -161,17 +185,11 @@ export default function ActivityForm() {
               />
             </Stack>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-              <TextField
-                name="city"
-                label="City"
-                defaultValue={activity?.city}
-                fullWidth
-              />
-              <TextField
-                name="venue"
-                label="Venue"
-                defaultValue={activity?.venue}
-                fullWidth
+              <LocationInput
+                control={control}
+                label="Enter the location"
+                name="location"
+                // fullWidth
               />
             </Stack>
 
@@ -183,7 +201,21 @@ export default function ActivityForm() {
                 mt: 1,
               }}
             >
-              <Button sx={{ textTransform: "none" }} variant="outlined">
+              <Button
+                sx={{
+                  textTransform: "none",
+                  borderRadius: 3,
+                  px: 3,
+                  py: 1.2,
+                  "&:hover": {
+                    background: "linear-gradient(90deg, #ffd2d2ff, #7696ffff)",
+                    border: 0,
+                    color: "#fff",
+                    py: 1.3,
+                  },
+                }}
+                variant="outlined"
+              >
                 Cancel
               </Button>
               <Button
