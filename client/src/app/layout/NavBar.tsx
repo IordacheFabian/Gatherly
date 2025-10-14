@@ -176,30 +176,31 @@ export default function NavBar() {
             )}
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Button
-                variant="contained"
-                color="secondary"
-                startIcon={<AddIcon />}
-                sx={{
-                  background:
-                    "linear-gradient(90deg, #7b61ff 0%, #29b6f6 100%)",
-                  color: "common.white",
-                  borderRadius: 3,
-                  textTransform: "none",
-                  px: 3,
-                  py: 0.2,
-                  boxShadow: "0 8px 22px rgba(41,182,246,0.12)",
-                  "&:hover": {
-                    transform: "translateY(-1px)",
-                    boxShadow: "0 12px 34px rgba(123,97,255,0.16)",
-                  },
-                }}
-                component={NavLink}
-                to="/createActivity"
-              >
-                Create activity
-              </Button>
-
+              {!isMobile && (
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  startIcon={<AddIcon />}
+                  sx={{
+                    background:
+                      "linear-gradient(90deg, #7b61ff 0%, #29b6f6 100%)",
+                    color: "common.white",
+                    borderRadius: 3,
+                    textTransform: "none",
+                    px: 3,
+                    py: 0.2,
+                    boxShadow: "0 8px 22px rgba(41,182,246,0.12)",
+                    "&:hover": {
+                      transform: "translateY(-1px)",
+                      boxShadow: "0 12px 34px rgba(123,97,255,0.16)",
+                    },
+                  }}
+                  component={NavLink}
+                  to="/createActivity"
+                >
+                  Create activity
+                </Button>
+              )}
               {!isMobile && (
                 <IconButton onClick={openProfile} sx={{ ml: 1 }}>
                   <Avatar sx={{ width: 36, height: 36 }}>U</Avatar>

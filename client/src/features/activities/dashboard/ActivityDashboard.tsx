@@ -1,6 +1,7 @@
 import { Grid, useMediaQuery, useTheme } from "@mui/material";
 import ActivityList from "./ActivityList";
 import ActivityFilters from "./ActivityFilters";
+import ActivityFiltersMobile from "./ActivityFiltersMobile";
 
 export default function ActivityDashboard() {
   const theme = useTheme();
@@ -8,6 +9,11 @@ export default function ActivityDashboard() {
   return (
     <>
       <Grid container spacing={3}>
+        {isMobile && (
+          <Grid>
+            <ActivityFiltersMobile />
+          </Grid>
+        )}
         {!isMobile && (
           <Grid size={8}>
             <ActivityList />

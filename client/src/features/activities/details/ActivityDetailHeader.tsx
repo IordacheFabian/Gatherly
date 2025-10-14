@@ -86,7 +86,7 @@ export default function ActivityDetailsHeader({ activity }: Props) {
             >
               Hosted by{" "}
               <Link
-                to={`/profiles/username`}
+                to={`/profiles/Bob`}
                 style={{
                   color: "#fff",
                   fontWeight: 700,
@@ -138,7 +138,10 @@ export default function ActivityDetailsHeader({ activity }: Props) {
                   borderRadius: 2,
                   px: 2,
                   textTransform: "none",
-                  "&:hover": { opacity: 0.95 },
+                  ":hover": {
+                    background: "linear-gradient(0deg,#7b61ff,#29b6f6)",
+                    fontSize: 15.2,
+                  },
                 }}
                 disabled={isCancelled}
               >
@@ -156,7 +159,10 @@ export default function ActivityDetailsHeader({ activity }: Props) {
                 borderRadius: 2,
                 px: 2,
                 textTransform: "none",
-                "&:hover": { opacity: 0.95 },
+                ":hover": {
+                  background: "linear-gradient(0deg,#7b61ff,#29b6f6)",
+                  fontSize: 15.2,
+                },
               }}
               disabled={isCancelled || loading}
             >

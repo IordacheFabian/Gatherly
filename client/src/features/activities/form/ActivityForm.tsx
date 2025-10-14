@@ -42,10 +42,11 @@ export default function ActivityForm() {
       reset({
         ...activity,
         location: {
-          city: activity.city,
-          venue: activity.venue,
-          latitude: activity.latitude,
-          longitude: activity.longitude,
+          city: activity.city ?? "",
+          venue: activity.venue ?? "",
+          latitude: activity.latitude != null ? String(activity.latitude) : "",
+          longitude:
+            activity.longitude != null ? String(activity.longitude) : "",
         },
       });
     }

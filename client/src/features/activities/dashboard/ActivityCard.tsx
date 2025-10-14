@@ -104,7 +104,7 @@ export default function ActivityCard({ activity }: Props) {
           </Stack>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
             <Box>
-              Hosted by <Link to={`/profiles/Fabian`}>Fabian</Link>
+              Hosted by <Link to={`/profiles/Bob`}>Bob</Link>
             </Box>
           </Typography>
         </Box>
