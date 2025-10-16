@@ -7,7 +7,6 @@ import ContactMailIcon from "@mui/icons-material/ContactMail";
 import AddIcon from "@mui/icons-material/Add";
 import {
   AppBar,
-  Avatar,
   Box,
   Button,
   Container,
@@ -19,8 +18,6 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Menu,
-  MenuItem,
   Toolbar,
   Typography,
   useTheme,
@@ -28,6 +25,8 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { NavLink } from "react-router";
+import { useAccount } from "../../lib/hooks/useAccount";
+import UserMenu from "./UserMenu";
 
 const pages = [
   {
@@ -44,15 +43,15 @@ export default function NavBar() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [drawerOpen, setDrawerOpen] = React.useState(false);
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const { currentUser } = useAccount();
 
-  const openProfile = (e: React.MouseEvent<HTMLElement>) =>
-    setAnchorEl(e.currentTarget);
-  const closeProfile = () => setAnchorEl(null);
+  // const location = useLocation();
+
+  // if (location.pathname.startsWith("/login")) return null;
 
   return (
     <>
-      <AppBar
+        <AppBar
         position="sticky"
         elevation={3}
         sx={{
@@ -176,7 +175,7 @@ export default function NavBar() {
             )}
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              {!isMobile && (
+              {!isMobile && currentUser && (
                 <Button
                   variant="contained"
                   color="secondary"
@@ -187,6 +186,7 @@ export default function NavBar() {
                     color: "common.white",
                     borderRadius: 3,
                     textTransform: "none",
+                    height: 40,
                     px: 3,
                     py: 0.2,
                     boxShadow: "0 8px 22px rgba(41,182,246,0.12)",
@@ -201,10 +201,34 @@ export default function NavBar() {
                   Create activity
                 </Button>
               )}
-              {!isMobile && (
-                <IconButton onClick={openProfile} sx={{ ml: 1 }}>
-                  <Avatar sx={{ width: 36, height: 36 }}>U</Avatar>
-                </IconButton>
+              {!isMobile && currentUser && (
+                <UserMenu />
+              ) }
+
+              {!isMobile && !currentUser && (
+                <Button 
+                  variant="contained"
+                  color="secondary"
+                  startIcon={<AddIcon />}
+                  sx={{
+                    background:
+                      "linear-gradient(90deg, #7b61ff 0%, #29b6f6 100%)",
+                    color: "common.white",
+                    borderRadius: 3,
+                    textTransform: "none",
+                    height: 40,
+                    px: 3,
+                    py: 0.2,
+                    boxShadow: "0 8px 22px rgba(41,182,246,0.12)",
+                    "&:hover": {
+                      transform: "translateY(-1px)",
+                      boxShadow: "0 12px 34px rgba(123,97,255,0.16)",
+                    },
+                  }}
+                  component={NavLink}
+                  to="/login" >
+                  Sign In
+                </Button>
               )}
 
               {isMobile && (
@@ -217,13 +241,7 @@ export default function NavBar() {
         </Container>
       </AppBar>
 
-      {/* profile menu */}
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={closeProfile}>
-        <MenuItem onClick={closeProfile}>Profile</MenuItem>
-        <MenuItem onClick={closeProfile}>Settings</MenuItem>
-        <Divider />
-        <MenuItem onClick={closeProfile}>Logout</MenuItem>
-      </Menu>
+      {/* profile menu handled inside UserMenu component */}
 
       {/* drawer for mobile */}
       <Drawer
@@ -262,6 +280,8 @@ export default function NavBar() {
           </List>
         </Box>
       </Drawer>
+      
     </>
+          
   );
 }

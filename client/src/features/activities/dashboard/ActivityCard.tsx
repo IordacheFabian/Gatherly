@@ -17,7 +17,6 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { Link } from "react-router";
-import type { Activity } from "../../../lib/types";
 
 type Props = {
   activity: Activity;
@@ -216,9 +215,17 @@ export default function ActivityCard({ activity }: Props) {
               px: 2.2,
               py: 1,
               boxShadow: "0 8px 22px rgba(41,182,246,0.12)",
-              "&:hover": {
-                transform: "scale(1.05)",
-                boxShadow: "0 12px 30px rgba(41,182,246,0.24)",
+              ":hover": {
+                background:
+                  "linear-gradient(90deg, rgba(123,97,255,0.95) 0%, rgba(41,182,246,0.92) 70%)",
+                backdropFilter: "saturate(120%) blur(6px)",
+                // give the inner container a subtle rounded bottom to echo card corners
+                "& .MuiContainer-root": {
+                  borderRadius: "0 0 12px 12px",
+                  overflow: "visible",
+                },
+                color: "#fff",
+                borderColor: "transparent",
               },
             }}
             component={Link}

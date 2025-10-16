@@ -10,7 +10,6 @@ import {
   useTheme,
   Button,
 } from "@mui/material";
-import type { Activity } from "../../../lib/types";
 import { useState } from "react";
 import MapComponent from "../../../app/shared/components/MapComponent";
 
@@ -75,8 +74,17 @@ export default function ActivityDetailsInfo({ activity }: Props) {
                 color: "#fff",
                 fontSize: 11,
                 ":hover": {
-                  background: "linear-gradient(0deg,#7b61ff,#29b6f6)",
-                  fontSize: 11.2,
+                  background:
+                    "linear-gradient(90deg, rgba(123,97,255,0.95) 0%, rgba(41,182,246,0.92) 70%)",
+                  backdropFilter: "saturate(120%) blur(6px)",
+                  // give the inner container a subtle rounded bottom to echo card corners
+                  "& .MuiContainer-root": {
+                    borderRadius: "0 0 12px 12px",
+                    overflow: "visible",
+                  },
+                  color: "#fff",
+                  // borderColor: "transparent",
+                  boxShadow: "0 8px 22px rgba(41,182,246,0.12)",
                 },
               }}
             >

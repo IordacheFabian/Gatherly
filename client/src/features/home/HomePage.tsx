@@ -8,7 +8,7 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import { Link } from "react-router";
-import BubbleBackdrop from "../../components/BubbleBackdrop"; // <- new import
+import BubbleBackdrop from "../../components/BubbleBackdrop"; 
 
 export default function HomePage() {
   const theme = useTheme();

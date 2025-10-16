@@ -12,7 +12,6 @@ import {
 import { Link } from "react-router";
 import CancelIcon from "@mui/icons-material/Cancel";
 import EventBusyIcon from "@mui/icons-material/EventBusy";
-import type { Activity } from "../../../lib/types";
 
 type Props = {
   activity: Activity;
@@ -139,8 +138,17 @@ export default function ActivityDetailsHeader({ activity }: Props) {
                   px: 2,
                   textTransform: "none",
                   ":hover": {
-                    background: "linear-gradient(0deg,#7b61ff,#29b6f6)",
-                    fontSize: 15.2,
+                    background:
+                      "linear-gradient(90deg, rgba(123,97,255,0.95) 0%, rgba(41,182,246,0.92) 70%)",
+                    backdropFilter: "saturate(120%) blur(6px)",
+                    // give the inner container a subtle rounded bottom to echo card corners
+                    "& .MuiContainer-root": {
+                      borderRadius: "0 0 12px 12px",
+                      overflow: "visible",
+                    },
+                    color: "#fff",
+                    borderColor: "transparent",
+
                   },
                 }}
                 disabled={isCancelled}
