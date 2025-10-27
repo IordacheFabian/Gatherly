@@ -30,6 +30,7 @@ export default function ActivityDashboard() {
             <ActivityFilters />
           </Grid>
         )}
+
       </Grid>
     </>
   );

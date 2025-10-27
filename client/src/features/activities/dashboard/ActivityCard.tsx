@@ -17,6 +17,8 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { Link } from "react-router";
+// import LiquidGlass from 'liquid-glass-react'Z
+
 
 type Props = {
   activity: Activity;
@@ -59,11 +61,67 @@ export default function ActivityCard({ activity }: Props) {
     | undefined;
 
   return (
+    // <Grow in appear timeout={400}>
     <Card
       elevation={3}
       sx={{
-        borderRadius: 3,
+        borderRadius: 5,
         overflow: "hidden",
+        position: "relative",
+        // overflow: "hidden",
+        // borderRadius: 10,
+        textTransform: "none",
+        fontWeight: 700,
+        px: 3,
+        py: 0.9,
+        minWidth: 96,
+        // color: "#1b1a1aff",
+        color: "#fff",
+        // subtle translucent base so backdropFilter works through
+        background:
+          "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+        border: "1px solid rgba(255,255,255,0.14)",
+        boxShadow:
+          "inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 30px rgba(11,14,46,0.06)",
+        backdropFilter: "blur(6px) saturate(120%)",
+        WebkitBackdropFilter: "blur(6px) saturate(120%)",
+
+        // moving sheen + subtle color wash via pseudo elements
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          left: "-40%",
+          top: "-60%",
+          width: "220%",
+          height: "220%",
+          background:
+            "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.16), rgba(255,255,255,0) 18%), linear-gradient(90deg, rgba(123,97,255,0.10), rgba(41,182,246,0.10))",
+          transform: "rotate(20deg)",
+          transition: "transform 560ms cubic-bezier(.2,.9,.2,1), opacity 300ms",
+          opacity: 0.95,
+          pointerEvents: "none",
+        },
+        "&::after": {
+          content: '""',
+          position: "absolute",
+          inset: 0,
+          borderRadius: 12,
+          boxShadow: "inset 0 -8px 24px rgba(0,0,0,0.08)",
+          pointerEvents: "none",
+        },
+
+        // hover/tap states
+        "&:hover": {
+          transform: "translateY(-5px) scale(1.02)",
+          boxShadow: "0 18px 40px rgba(41,182,246,0.14)",
+          "&::before": {
+            transform: "rotate(20deg) translateX(8%)",
+          },
+        },
+        "&:active": {
+          transform: "translateY(-1px) scale(0.995)",
+          boxShadow: "0 8px 20px rgba(11,14,46,0.08)",
+        },
       }}
     >
       <Box
@@ -72,6 +130,9 @@ export default function ActivityCard({ activity }: Props) {
           alignItems: "center",
           gap: 2,
           p: 2,
+          mt: 2,
+          width: "100%",
+          borderRadius: 4,
           background:
             "linear-gradient(90deg, rgba(123,97,255,0.12), rgba(41,182,246,0.08))",
         }}
@@ -84,7 +145,7 @@ export default function ActivityCard({ activity }: Props) {
           sx={{ width: 64, height: 64, borderRadius: 2 }}
         />
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="h6" noWrap>
+          <Typography variant="h6" noWrap sx={{ fontWeight: 600 }}>
             {activity.title}
           </Typography>
           <Stack
@@ -97,12 +158,12 @@ export default function ActivityCard({ activity }: Props) {
               fontSize="small"
               sx={{ color: "text.secondary" }}
             />
-            <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+            <Typography variant="body2" sx={{ color: "#fff" }} noWrap>
               {formattedDate}
             </Typography>
           </Stack>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            <Box>
+            <Box sx={{ color: "#fff" }}>
               Hosted by <Link to={`/profiles/Bob`}>Bob</Link>
             </Box>
           </Typography>
@@ -113,7 +174,7 @@ export default function ActivityCard({ activity }: Props) {
             <IconButton size="small" sx={{}}>
               <FavoriteBorderIcon
                 sx={{
-                  color: "#797979ff",
+                  color: "#fff",
                   borderRadius: 5,
                   "&:hover": { color: "#ff0000ff" },
                 }}
@@ -139,18 +200,18 @@ export default function ActivityCard({ activity }: Props) {
             <Typography
               variant="body2"
               sx={{
-                color: "text.secondary",
                 display: "-webkit-box",
                 WebkitLineClamp: 3,
                 WebkitBoxOrient: "vertical",
                 overflow: "hidden",
+                color: "#fff",
               }}
             >
               {activity.description}
 
               <Box>
                 {(isHost || isGoing) && (
-                  <Chip label={label} color={color} sx={{ borderRadius: 3 }} />
+                  <Chip label={label} color={color} sx={{ borderRadius: 3,  }} />
                 )}
                 {isCanceled && (
                   <Chip
@@ -167,8 +228,8 @@ export default function ActivityCard({ activity }: Props) {
               alignItems="center"
               sx={{ mt: 1 }}
             >
-              <PlaceIcon sx={{ color: "text.secondary", fontSize: 16 }} />
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              <PlaceIcon sx={{ color: "#fff", fontSize: 16 }} />
+              <Typography variant="caption" sx={{ color: "#fff" }}>
                 {activity.city} · {activity.venue}
               </Typography>
             </Stack>
@@ -202,39 +263,75 @@ export default function ActivityCard({ activity }: Props) {
           px: 2,
         }}
       >
-        <Box sx={{ display: "flex", gap: 1 }}>
+        <Box sx={{ ml: "auto", display: "flex", alignItems: "center" }}>
           <Button
-            variant="contained"
-            color="secondary"
-            endIcon={<VisibilityIcon />}
-            sx={{
-              background: "linear-gradient(45deg, #7b61ff, #29b6f6)",
-              color: "#fff",
-              borderRadius: 3,
-              textTransform: "none",
-              px: 2.2,
-              py: 1,
-              boxShadow: "0 8px 22px rgba(41,182,246,0.12)",
-              ":hover": {
-                background:
-                  "linear-gradient(90deg, rgba(123,97,255,0.95) 0%, rgba(41,182,246,0.92) 70%)",
-                backdropFilter: "saturate(120%) blur(6px)",
-                // give the inner container a subtle rounded bottom to echo card corners
-                "& .MuiContainer-root": {
-                  borderRadius: "0 0 12px 12px",
-                  overflow: "visible",
-                },
-                color: "#fff",
-                borderColor: "transparent",
-              },
-            }}
             component={Link}
             to={`/activities/${activity.id}`}
+            variant="contained"
+            endIcon={<VisibilityIcon />}
+            sx={{
+              position: "relative",
+              overflow: "hidden",
+              borderRadius: 3,
+              textTransform: "none",
+              fontWeight: 700,
+              px: 3,
+              py: 0.9,
+              minWidth: 96,
+              color: "#1b1a1aff",
+              // subtle translucent base so backdropFilter works through
+              background:
+                "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+              border: "1px solid rgba(255,255,255,0.14)",
+              boxShadow:
+                "inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 30px rgba(11,14,46,0.06)",
+              backdropFilter: "blur(6px) saturate(120%)",
+              WebkitBackdropFilter: "blur(6px) saturate(120%)",
+
+              // moving sheen + subtle color wash via pseudo elements
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                left: "-40%",
+                top: "-60%",
+                width: "220%",
+                height: "220%",
+                background:
+                  "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.16), rgba(255,255,255,0) 18%), linear-gradient(90deg, rgba(123,97,255,0.10), rgba(41,182,246,0.10))",
+                transform: "rotate(20deg)",
+                transition:
+                  "transform 560ms cubic-bezier(.2,.9,.2,1), opacity 300ms",
+                opacity: 0.95,
+                pointerEvents: "none",
+              },
+              "&::after": {
+                content: '""',
+                position: "absolute",
+                inset: 0,
+                borderRadius: 12,
+                boxShadow: "inset 0 -8px 24px rgba(0,0,0,0.08)",
+                pointerEvents: "none",
+              },
+
+              // hover/tap states
+              "&:hover": {
+                transform: "translateY(-5px) scale(1.02)",
+                boxShadow: "0 18px 40px rgba(41,182,246,0.14)",
+                "&::before": {
+                  transform: "rotate(20deg) translateX(8%)",
+                },
+              },
+              "&:active": {
+                transform: "translateY(-1px) scale(0.995)",
+                boxShadow: "0 8px 20px rgba(11,14,46,0.08)",
+              },
+            }}
           >
             View
           </Button>
         </Box>
       </CardActions>
     </Card>
+    // </Grow>
   );
 }

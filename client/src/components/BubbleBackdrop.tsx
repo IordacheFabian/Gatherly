@@ -52,19 +52,35 @@ export default function BubbleBackdrop({
       const minDim = Math.min(rect.width || 1, rect.height || 1);
       const arr: Particle[] = [];
       for (let i = 0; i < n; i++) {
-        const baseSize = (10 + Math.random() * 36) / minDim; // normalized
+        const baseSize = (30 + Math.random() * 36) / minDim; // normalized
         arr.push({
           x: Math.random(),
           y: Math.random(),
           r: baseSize,
-          hue: 215 + Math.random() * 40, // bluish-purple range
-          sat: 70 + Math.random() * 20,
-          light: 50 + Math.random() * 10,
+          // // yellowish -> dark green range (approx 70..130)
+          // hue: 80 + Math.random() * 50,
+          // // moderate saturation for a natural, calm look
+          // sat: 35 + Math.random() * 30,
+          // // darker tones for depth (avoid very light greens)
+          // light: 28 + Math.random() * 18,
+
+          // dark purplish -> deep maroon range (approx 320..360 and 0..20)
+          hue:
+            Math.random() < 0.5
+              ? 320 + Math.random() * 40 // purples & wine reds
+              : Math.random() * 40, // reddish tones near 0°
+
+          // medium-low saturation for a muted, moody look
+          sat: 25 + Math.random() * 45,
+
+          // darker lightness for depth, matching the gradient's tones
+          light: 18 + Math.random() * 15,
           phase: Math.random() * Math.PI * 2,
-          speed: 0.2 + Math.random() * 0.9,
-          ampX: 0.01 + Math.random() * 0.06,
-          ampY: 0.01 + Math.random() * 0.06,
-          alpha: 0.08 + Math.random() * 0.28,
+          speed: 0.18 + Math.random() * 0.7,
+          ampX: 0.008 + Math.random() * 0.05,
+          ampY: 0.008 + Math.random() * 0.05,
+          // slightly lower max alpha for subtler glow
+          alpha: 0.06 + Math.random() * 0.22,
         });
       }
       return arr;

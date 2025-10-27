@@ -49,19 +49,78 @@ export default function ActivityFilters() {
     <Grow in appear timeout={400}>
       <Card
         sx={{
-          borderRadius: 3,
+          borderRadius: 5,
           overflow: "hidden",
+          position: "relative",
+          // overflow: "hidden",
+          // borderRadius: 10,
+          textTransform: "none",
+          fontWeight: 700,
+          px: 3,
+          py: 0.9,
+          minWidth: 96,
+          // color: "#1b1a1aff",
+          color: "#fff",
+          // subtle translucent base so backdropFilter works through
+          background:
+            "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+          border: "1px solid rgba(255,255,255,0.14)",
+          boxShadow:
+            "inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 30px rgba(11,14,46,0.06)",
+          backdropFilter: "blur(6px) saturate(120%)",
+          WebkitBackdropFilter: "blur(6px) saturate(120%)",
+
+          // moving sheen + subtle color wash via pseudo elements
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            left: "-40%",
+            top: "-60%",
+            width: "220%",
+            height: "220%",
+            background:
+              "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.16), rgba(255,255,255,0) 18%), linear-gradient(90deg, rgba(123,97,255,0.10), rgba(41,182,246,0.10))",
+            transform: "rotate(20deg)",
+            transition:
+              "transform 560ms cubic-bezier(.2,.9,.2,1), opacity 300ms",
+            opacity: 0.95,
+            pointerEvents: "none",
+          },
+          "&::after": {
+            content: '""',
+            position: "absolute",
+            inset: 0,
+            borderRadius: 12,
+            boxShadow: "inset 0 -8px 24px rgba(0,0,0,0.08)",
+            pointerEvents: "none",
+          },
+
+          // hover/tap states
+          "&:hover": {
+            transform: "translateY(-5px) scale(1.02)",
+            boxShadow: "0 18px 40px rgba(41,182,246,0.14)",
+            "&::before": {
+              transform: "rotate(20deg) translateX(8%)",
+            },
+          },
+          "&:active": {
+            transform: "translateY(-1px) scale(0.995)",
+            boxShadow: "0 8px 20px rgba(11,14,46,0.08)",
+          },
         }}
       >
         <CardHeader
           title={<Typography variant="h6">Filters</Typography>}
           avatar={<FilterList sx={{ color: "#fff" }} />}
+          
           action={
             <IconButton
               onClick={handleClear}
               aria-label="clear filters"
               sx={{
-                background: "linear-gradient(45deg, #7b61ff, #29b6f6)",
+                background:
+                  "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+
                 color: "#fff",
                 mr: 1,
                 "&:hover": { opacity: 0.95 },
@@ -71,17 +130,88 @@ export default function ActivityFilters() {
             </IconButton>
           }
           sx={{
-            background: "linear-gradient(45deg, #7b61ff, #29b6f6)",
             color: "#fff",
             alignItems: "center",
             px: 2,
+            position: "relative",
+            overflow: "hidden",
+            borderRadius: 10,
+            textTransform: "none",
+            fontWeight: 700,
+            py: 0.9,
+            mt: 2,
+            minWidth: 96,
+            background:
+              "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+            border: "1px solid rgba(255,255,255,0.14)",
+            boxShadow:
+              "inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 30px rgba(11,14,46,0.06)",
+            backdropFilter: "blur(6px) saturate(120%)",
+            WebkitBackdropFilter: "blur(6px) saturate(120%)",
+
+            // moving sheen + subtle color wash via pseudo elements
+            "&::before": {
+              content: '""',
+              position: "absolute",
+              left: "-40%",
+              top: "-60%",
+              width: "220%",
+              height: "220%",
+              background:
+                "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.16), rgba(255,255,255,0) 18%), linear-gradient(90deg, rgba(123,97,255,0.10), rgba(41,182,246,0.10))",
+              transform: "rotate(20deg)",
+              transition:
+                "transform 560ms cubic-bezier(.2,.9,.2,1), opacity 300ms",
+              opacity: 0.95,
+              pointerEvents: "none",
+            },
+            "&::after": {
+              content: '""',
+              position: "absolute",
+              inset: 0,
+              borderRadius: 12,
+              boxShadow: "inset 0 -8px 24px rgba(0,0,0,0.08)",
+              pointerEvents: "none",
+            },
           }}
         />
 
         <CardContent>
           <Stack spacing={2}>
             <TextField
-              sx={{ display: "flex", alignItems: "start" }}
+              sx={{
+                display: "flex",
+                alignItems: "start",
+                borderRadius: 3,
+                // overflow: "hidden",
+                color: "#fff",
+                background: "transparent",
+                backdropFilter: "blur(8px) saturate(120%)",
+                WebkitBackdropFilter: "blur(8px) saturate(120%)",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+
+                "& .MuiOutlinedInput-root": {
+                  background: "transparent",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  borderRadius: 3,
+                  "& fieldset": { border: "none" },
+                  "&:hover fieldset": { border: "none" },
+                  "&.Mui-focused fieldset": { border: "none" },
+                  "& input": {
+                    color: "#000000ff",
+                    background: "transparent",
+                  },
+                },
+                "& input:-webkit-autofill": {
+                  WebkitBoxShadow: "0 0 0 1000px transparent inset !important",
+                  WebkitTextFillColor: "rgba(255,255,255,0.7) !important",
+                  transition: "background-color 9999s ease-out 0s !important",
+                },
+                "& input:-webkit-autofill:focus": {
+                  WebkitBoxShadow: "0 0 0 1000px transparent inset !important",
+                  WebkitTextFillColor: "rgba(255,255,255,0.7) !important",
+                },
+              }}
               value={search}
               size="small"
               onChange={(e) => setSearch(e.target.value)}
@@ -120,14 +250,72 @@ export default function ActivityFilters() {
                           ? {
                               color: "#fff",
                               background:
-                                "linear-gradient(45deg, #7b61ff, #29b6f6)",
+                                "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+
                               boxShadow: "0 6px 18px rgba(43, 122, 255, 0.18)",
                               border: "none",
                               "&:hover": { filter: "brightness(0.95)" },
                               borderRadius: "999px",
                               px: 1.5,
                             }
-                          : { borderRadius: "999px", px: 1 }
+                          : {
+                              position: "relative",
+                              overflow: "hidden",
+                              borderRadius: 10,
+                              textTransform: "none",
+                              fontWeight: 700,
+                              px: 3,
+                              py: 0.9,
+                              minWidth: 96,
+                              // color: "#1b1a1aff",
+                              color: "#fff",
+                              // subtle translucent base so backdropFilter works through
+                              background:
+                                "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+                              border: "1px solid rgba(255,255,255,0.14)",
+                              boxShadow:
+                                "inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 30px rgba(11,14,46,0.06)",
+                              backdropFilter: "blur(6px) saturate(120%)",
+                              WebkitBackdropFilter: "blur(6px) saturate(120%)",
+
+                              // moving sheen + subtle color wash via pseudo elements
+                              "&::before": {
+                                content: '""',
+                                position: "absolute",
+                                left: "-40%",
+                                top: "-60%",
+                                width: "220%",
+                                height: "220%",
+                                background:
+                                  "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.16), rgba(255,255,255,0) 18%), linear-gradient(90deg, rgba(123,97,255,0.10), rgba(41,182,246,0.10))",
+                                transform: "rotate(20deg)",
+                                transition:
+                                  "transform 560ms cubic-bezier(.2,.9,.2,1), opacity 300ms",
+                                opacity: 0.95,
+                                pointerEvents: "none",
+                              },
+                              "&::after": {
+                                content: '""',
+                                position: "absolute",
+                                inset: 0,
+                                borderRadius: 12,
+                                boxShadow: "inset 0 -8px 24px rgba(0,0,0,0.08)",
+                                pointerEvents: "none",
+                              },
+
+                              // hover/tap states
+                              "&:hover": {
+                                transform: "translateY(-5px) scale(1.02)",
+                                boxShadow: "0 18px 40px rgba(41,182,246,0.14)",
+                                "&::before": {
+                                  transform: "rotate(20deg) translateX(8%)",
+                                },
+                              },
+                              "&:active": {
+                                transform: "translateY(-1px) scale(0.995)",
+                                boxShadow: "0 8px 20px rgba(11,14,46,0.08)",
+                              },
+                            }
                       }
                     />
                   );
@@ -154,7 +342,42 @@ export default function ActivityFilters() {
                   onChange={(e) => setDate(e.target.value)}
                   sx={{ minWidth: 150 }}
                   InputProps={{
-                    sx: { borderRadius: "8px", backgroundColor: "#fff" },
+                    sx: {
+                      borderRadius: "8px",
+                      backgroundColor: "#fff",
+                      // overflow: "hidden",
+                      color: "#fff",
+                      background: "transparent",
+                      backdropFilter: "blur(8px) saturate(120%)",
+                      WebkitBackdropFilter: "blur(8px) saturate(120%)",
+                      boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+
+                      "& .MuiOutlinedInput-root": {
+                        background: "transparent",
+                        border: "1px solid rgba(255,255,255,0.14)",
+                        borderRadius: 3,
+                        "& fieldset": { border: "none" },
+                        "&:hover fieldset": { border: "none" },
+                        "&.Mui-focused fieldset": { border: "none" },
+                        "& input": {
+                          color: "#000000ff",
+                          background: "transparent",
+                        },
+                      },
+
+                      "& input:-webkit-autofill": {
+                        WebkitBoxShadow:
+                          "0 0 0 1000px transparent inset !important",
+                        WebkitTextFillColor: "rgba(255,255,255,0.7) !important",
+                        transition:
+                          "background-color 9999s ease-out 0s !important",
+                      },
+                      "& input:-webkit-autofill:focus": {
+                        WebkitBoxShadow:
+                          "0 0 0 1000px transparent inset !important",
+                        WebkitTextFillColor: "rgba(255,255,255,0.7) !important",
+                      },
+                    },
                   }}
                   inputProps={{
                     "aria-label": "filter-date",
@@ -170,10 +393,68 @@ export default function ActivityFilters() {
                       ? {
                           color: "#fff",
                           background:
-                            "linear-gradient(45deg, #7b61ff, #29b6f6)",
+                            "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
                           borderRadius: "999px",
                         }
-                      : { borderRadius: "999px" }
+                      : {
+                          borderRadius: "999px",
+                          position: "relative",
+                          overflow: "hidden",
+                          // borderRadius: 10,
+                          textTransform: "none",
+                          fontWeight: 700,
+                          px: 3,
+                          py: 0.9,
+                          minWidth: 96,
+                          // color: "#1b1a1aff",
+                          color: "#fff",
+                          // subtle translucent base so backdropFilter works through
+                          background:
+                            "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+                          border: "1px solid rgba(255,255,255,0.14)",
+                          boxShadow:
+                            "inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 30px rgba(11,14,46,0.06)",
+                          backdropFilter: "blur(6px) saturate(120%)",
+                          WebkitBackdropFilter: "blur(6px) saturate(120%)",
+
+                          // moving sheen + subtle color wash via pseudo elements
+                          "&::before": {
+                            content: '""',
+                            position: "absolute",
+                            left: "-40%",
+                            top: "-60%",
+                            width: "220%",
+                            height: "220%",
+                            background:
+                              "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.16), rgba(255,255,255,0) 18%), linear-gradient(90deg, rgba(123,97,255,0.10), rgba(41,182,246,0.10))",
+                            transform: "rotate(20deg)",
+                            transition:
+                              "transform 560ms cubic-bezier(.2,.9,.2,1), opacity 300ms",
+                            opacity: 0.95,
+                            pointerEvents: "none",
+                          },
+                          "&::after": {
+                            content: '""',
+                            position: "absolute",
+                            inset: 0,
+                            borderRadius: 12,
+                            boxShadow: "inset 0 -8px 24px rgba(0,0,0,0.08)",
+                            pointerEvents: "none",
+                          },
+
+                          // hover/tap states
+                          "&:hover": {
+                            transform: "translateY(-5px) scale(1.02)",
+                            boxShadow: "0 18px 40px rgba(41,182,246,0.14)",
+                            "&::before": {
+                              transform: "rotate(20deg) translateX(8%)",
+                            },
+                          },
+                          "&:active": {
+                            transform: "translateY(-1px) scale(0.995)",
+                            boxShadow: "0 8px 20px rgba(11,14,46,0.08)",
+                          },
+                        }
                   }
                 />
               </Stack>
