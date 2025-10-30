@@ -85,7 +85,7 @@ export default function ActivityDetailsChat() {
             "linear-gradient(90deg, rgba(123,97,255,0.12), rgba(41,182,246,0.08))",
           color: "text.primary",
           p: 2,
-          borderRadius: 2,
+          borderRadius: 6,
           boxShadow: 1,
         }}
       >
@@ -97,7 +97,57 @@ export default function ActivityDetailsChat() {
         </Typography>
       </Box>
 
-      <Card sx={{ mt: 2, borderRadius: 3, boxShadow: 6, overflow: "hidden" }}>
+      <Card
+        sx={{
+          mt: 2,
+          borderRadius: 10,
+          boxShadow: 6,
+          overflow: "hidden",
+          position: "relative",
+          // overflow: "hidden",
+          // borderRadius: 10,
+          textTransform: "none",
+          fontWeight: 700,
+          px: 3,
+          py: 0.9,
+          minWidth: 96,
+          // color: "#1b1a1aff",
+          color: "#fff",
+          // subtle translucent base so backdropFilter works through
+          background:
+            "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+          border: "1px solid rgba(255,255,255,0.14)",
+          // boxShadow:
+          //   "inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 30px rgba(11,14,46,0.06)",
+          backdropFilter: "blur(6px) saturate(120%)",
+          WebkitBackdropFilter: "blur(6px) saturate(120%)",
+
+          // moving sheen + subtle color wash via pseudo elements
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            left: "-40%",
+            top: "-60%",
+            width: "220%",
+            height: "220%",
+            background:
+              "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.16), rgba(255,255,255,0) 18%), linear-gradient(90deg, rgba(123,97,255,0.10), rgba(41,182,246,0.10))",
+            transform: "rotate(20deg)",
+            transition:
+              "transform 560ms cubic-bezier(.2,.9,.2,1), opacity 300ms",
+            opacity: 0.95,
+            pointerEvents: "none",
+          },
+          "&::after": {
+            content: '""',
+            position: "absolute",
+            inset: 0,
+            borderRadius: 12,
+            boxShadow: "inset 0 -8px 24px rgba(0,0,0,0.08)",
+            pointerEvents: "none",
+          },
+        }}
+      >
         <CardContent sx={{ p: 0 }}>
           <Box
             ref={listRef}
@@ -108,7 +158,7 @@ export default function ActivityDetailsChat() {
               display: "flex",
               flexDirection: "column",
               gap: 2,
-              bgcolor: "background.paper",
+              // bgcolor: "background.paper",
               // simple pop animation for messages
               "@keyframes pop": {
                 "0%": { opacity: 0, transform: "translateY(8px) scale(0.98)" },
@@ -139,13 +189,13 @@ export default function ActivityDetailsChat() {
                   sx={{
                     maxWidth: "78%",
                     bgcolor: m.mine ? "#7b61ff" : "grey.100",
-                    background: m.mine
-                      ? "linear-gradient(135deg,#7b61ff,#29b6f6)"
-                      : undefined,
+                    // background: m.mine
+                    //   ? "linear-gradient(135deg,#7b61ff,#29b6f6)"
+                    //   : undefined,
                     color: m.mine ? "common.white" : "text.primary",
                     px: 2.2,
                     py: 1.1,
-                    borderRadius: 2,
+                    borderRadius: 5,
                     borderTopLeftRadius: m.mine ? 2 : 0,
                     borderTopRightRadius: m.mine ? 0 : 2,
                     boxShadow: m.mine
@@ -153,6 +203,50 @@ export default function ActivityDetailsChat() {
                       : "none",
                     overflowWrap: "anywhere",
                     textAlign: "left",
+
+                    position: "relative",
+                    overflow: "hidden",
+                    // borderRadius: 10,
+                    textTransform: "none",
+                    fontWeight: 700,
+                    // px: 3,
+                    // py: 0.9,
+                    minWidth: 96,
+                    // color: "#1b1a1aff",
+                    // color: "#fff",
+                    // subtle translucent base so backdropFilter works through
+                    background:
+                      "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    // boxShadow:
+                    //   "inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 30px rgba(11,14,46,0.06)",
+                    backdropFilter: "blur(6px) saturate(120%)",
+                    WebkitBackdropFilter: "blur(6px) saturate(120%)",
+
+                    // moving sheen + subtle color wash via pseudo elements
+                    "&::before": {
+                      content: '""',
+                      position: "absolute",
+                      left: "-40%",
+                      top: "-60%",
+                      width: "220%",
+                      height: "220%",
+                      background:
+                        "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.16), rgba(255,255,255,0) 18%), linear-gradient(90deg, rgba(123,97,255,0.10), rgba(41,182,246,0.10))",
+                      transform: "rotate(20deg)",
+                      transition:
+                        "transform 560ms cubic-bezier(.2,.9,.2,1), opacity 300ms",
+                      opacity: 0.95,
+                      pointerEvents: "none",
+                    },
+                    "&::after": {
+                      content: '""',
+                      position: "absolute",
+                      inset: 0,
+                      borderRadius: 12,
+                      boxShadow: "inset 0 -8px 24px rgba(0,0,0,0.08)",
+                      pointerEvents: "none",
+                    },
                   }}
                 >
                   <Stack
@@ -210,7 +304,36 @@ export default function ActivityDetailsChat() {
                 flex: 1,
                 borderRadius: 3,
                 boxShadow: "none",
-                bgcolor: "background.default",
+                bgcolor: "transparent",
+                ml: 1,
+                // overflow: "hidden",
+                color: "#fff",
+                background: "transparent",
+                backdropFilter: "blur(8px) saturate(120%)",
+                WebkitBackdropFilter: "blur(8px) saturate(120%)",
+
+                "& .MuiOutlinedInput-root": {
+                  background: "transparent",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  borderRadius: 3,
+                  "& fieldset": { border: "none" },
+                  "&:hover fieldset": { border: "none" },
+                  "&.Mui-focused fieldset": { border: "none" },
+                  "& input": {
+                    color: "#000000ff",
+                    background: "transparent",
+                  },
+                },
+
+                "& input:-webkit-autofill": {
+                  WebkitBoxShadow: "0 0 0 1000px transparent inset !important",
+                  WebkitTextFillColor: "rgba(255,255,255,0.7) !important",
+                  transition: "background-color 9999s ease-out 0s !important",
+                },
+                "& input:-webkit-autofill:focus": {
+                  WebkitBoxShadow: "0 0 0 1000px transparent inset !important",
+                  WebkitTextFillColor: "rgba(255,255,255,0.7) !important",
+                },
               }}
             >
               <InputBase
@@ -220,7 +343,15 @@ export default function ActivityDetailsChat() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={onKeyDown}
-                sx={{ flex: 1, ml: 1 }}
+                sx={{
+                  flex: 1,
+                  ml: 1,
+                  borderRadius: 3,
+                  // overflow: "hidden",
+                  color: "#fff",
+                  background: "transparent",
+                  
+                }}
               />
               <IconButton onClick={send} color="primary" sx={{ p: 1 }}>
                 <SendIcon />

@@ -17,6 +17,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { Link } from "react-router";
+import AvatarPopover from "../../../app/shared/components/AvatarPopover";
 // import LiquidGlass from 'liquid-glass-react'Z
 
 
@@ -25,11 +26,8 @@ type Props = {
 };
 
 export default function ActivityCard({ activity }: Props) {
-  const isHost = false;
-  const isGoing = false;
-  const label = isHost ? "You are hosting" : "You are going";
-  const isCanceled = false;
-  const color = isHost ? "secondary" : isGoing ? "warning" : "default";
+  const label = activity.isHost ? "You are hosting" : "You are going";
+  const color = activity.isHost ? "secondary" : activity.isGoing ? "warning" : "default";
 
   // const handleDeleteClick = () => {
   //   if (removing) return;
@@ -86,42 +84,7 @@ export default function ActivityCard({ activity }: Props) {
         backdropFilter: "blur(6px) saturate(120%)",
         WebkitBackdropFilter: "blur(6px) saturate(120%)",
 
-        // moving sheen + subtle color wash via pseudo elements
-        "&::before": {
-          content: '""',
-          position: "absolute",
-          left: "-40%",
-          top: "-60%",
-          width: "220%",
-          height: "220%",
-          background:
-            "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.16), rgba(255,255,255,0) 18%), linear-gradient(90deg, rgba(123,97,255,0.10), rgba(41,182,246,0.10))",
-          transform: "rotate(20deg)",
-          transition: "transform 560ms cubic-bezier(.2,.9,.2,1), opacity 300ms",
-          opacity: 0.95,
-          pointerEvents: "none",
-        },
-        "&::after": {
-          content: '""',
-          position: "absolute",
-          inset: 0,
-          borderRadius: 12,
-          boxShadow: "inset 0 -8px 24px rgba(0,0,0,0.08)",
-          pointerEvents: "none",
-        },
-
-        // hover/tap states
-        "&:hover": {
-          transform: "translateY(-5px) scale(1.02)",
-          boxShadow: "0 18px 40px rgba(41,182,246,0.14)",
-          "&::before": {
-            transform: "rotate(20deg) translateX(8%)",
-          },
-        },
-        "&:active": {
-          transform: "translateY(-1px) scale(0.995)",
-          boxShadow: "0 8px 20px rgba(11,14,46,0.08)",
-        },
+        
       }}
     >
       <Box
@@ -163,8 +126,8 @@ export default function ActivityCard({ activity }: Props) {
             </Typography>
           </Stack>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            <Box sx={{ color: "#fff" }}>
-              Hosted by <Link to={`/profiles/Bob`}>Bob</Link>
+            <Box sx={{ color: "lightgray" }}>
+              Hosted by <Link to={`/profiles/${activity.hostId}`} style={{color: "white", textDecoration: 'none', fontSize: "14px"}}>{activity.hostDisplayName}</Link>
             </Box>
           </Typography>
         </Box>
@@ -210,10 +173,10 @@ export default function ActivityCard({ activity }: Props) {
               {activity.description}
 
               <Box>
-                {(isHost || isGoing) && (
+                {(activity.isHost || activity.isGoing) && (
                   <Chip label={label} color={color} sx={{ borderRadius: 3,  }} />
                 )}
-                {isCanceled && (
+                {activity.isCancelled && (
                   <Chip
                     label="Cancelled"
                     color="error"
@@ -233,6 +196,11 @@ export default function ActivityCard({ activity }: Props) {
                 {activity.city} · {activity.venue}
               </Typography>
             </Stack>
+            <Stack direction="row" spacing={1} alignItems="center" sx={{mt: 2}}>
+                {activity.attendees.map(att => (
+                  <AvatarPopover profile={att} key={att.id} />
+                ))}
+              </Stack>
           </Box>
 
           <Stack spacing={1} alignItems="flex-end">
@@ -272,7 +240,7 @@ export default function ActivityCard({ activity }: Props) {
             sx={{
               position: "relative",
               overflow: "hidden",
-              borderRadius: 3,
+              borderRadius: 10,
               textTransform: "none",
               fontWeight: 700,
               px: 3,

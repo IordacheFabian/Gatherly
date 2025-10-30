@@ -94,7 +94,7 @@ export default function NavBar() {
 
         // }}
         sx={{
-          position: "relative",
+          // position: "relative",
           overflow: "hidden",
 
           textTransform: "none",

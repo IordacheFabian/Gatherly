@@ -90,10 +90,47 @@ export default function LocationInput<T extends FieldValues>(props: Props<T>) {
         error={!!fieldState.error}
         helperText={fieldState.error?.message}
         sx={{
-          backgroundColor: "rgba(255,255,255,0.9)",
-          "& .MuiOutlinedInput-notchedOutline": {
+          borderRadius: 3,
+          // overflow: "hidden",
+          color: "#fff",
+          background: "transparent",
+          backdropFilter: "blur(8px) saturate(120%)",
+          WebkitBackdropFilter: "blur(8px) saturate(120%)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+
+          backgroundColor: fieldState.invalid
+            ? "rgba(255, 80, 80, 0.15)" // red tint when invalid ❌
+            : field.value && !fieldState.invalid
+            ? "rgba(76, 175, 80, 0.15)" // green tint when valid ✅
+            : "transparent", // default: transparent
+
+          "& .MuiOutlinedInput-root": {
+            background: "transparent",
+            border: "1px solid rgba(255,255,255,0.14)",
             borderRadius: 3,
-            borderColor: "linear-gradient(90deg, #7b61ff 0%, #29b6f6 100%)",
+            "& fieldset": { border: "none" },
+            "&:hover fieldset": { border: "none" },
+            "&.Mui-focused fieldset": { border: "none" },
+            "& input": {
+              color: "#000000ff",
+              background: "transparent",
+            },
+          },
+
+          "& .MuiFormHelperText-root": {
+            color: fieldState.error
+              ? "rgba(255,120,120,0.9)"
+              : "rgba(255,255,255,0.7)",
+          },
+
+          "& input:-webkit-autofill": {
+            WebkitBoxShadow: "0 0 0 1000px transparent inset !important",
+            WebkitTextFillColor: "rgba(255,255,255,0.7) !important",
+            transition: "background-color 9999s ease-out 0s !important",
+          },
+          "& input:-webkit-autofill:focus": {
+            WebkitBoxShadow: "0 0 0 1000px transparent inset !important",
+            WebkitTextFillColor: "rgba(255,255,255,0.7) !important",
           },
         }}
       />

@@ -8,6 +8,8 @@ function App() {
   const location = useLocation();
 
   return (
+    <>
+    
     <Box
       sx={{
         // backgroundImage: `linear-gradient(rgba(8,10,18,0.46), rgba(8,10,18,0.22)), url('/images/bg-gradient2.jpg')`,
@@ -34,6 +36,8 @@ function App() {
         </>
       )}
     </Box>
+    </>
+  
   );
 }
 

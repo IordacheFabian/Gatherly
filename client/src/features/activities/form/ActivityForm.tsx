@@ -89,7 +89,121 @@ export default function ActivityForm() {
 
   return (
     <Grow in timeout={360} style={{ transformOrigin: "top center" }}>
-      <Card sx={{ borderRadius: 3, overflow: "hidden", boxShadow: 3 }}>
+      <Card
+        sx={{
+          position: "relative",
+          overflow: "hidden",
+          borderRadius: 10,
+          textTransform: "none",
+          fontWeight: 700,
+          px: 3,
+          py: 0.9,
+          minWidth: 96,
+          // color: "#1b1a1aff",
+          color: "#fff",
+          // subtle translucent base so backdropFilter works through
+          background:
+            "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+          border: "1px solid rgba(255,255,255,0.14)",
+          boxShadow:
+            "inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 30px rgba(11,14,46,0.06)",
+          backdropFilter: "blur(6px) saturate(120%)",
+          WebkitBackdropFilter: "blur(6px) saturate(120%)",
+
+          // moving sheen + subtle color wash via pseudo elements
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            left: "-40%",
+            top: "-60%",
+            width: "220%",
+            height: "220%",
+            background:
+              "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.16), rgba(255,255,255,0) 18%), linear-gradient(90deg, rgba(123,97,255,0.10), rgba(41,182,246,0.10))",
+            transform: "rotate(20deg)",
+            transition:
+              "transform 560ms cubic-bezier(.2,.9,.2,1), opacity 300ms",
+            opacity: 0.95,
+            pointerEvents: "none",
+          },
+          "&::after": {
+            content: '""',
+            position: "absolute",
+            inset: 0,
+            borderRadius: 12,
+            boxShadow: "inset 0 -8px 24px rgba(0,0,0,0.08)",
+            pointerEvents: "none",
+          },
+
+          // hover/tap states
+          "&:hover": {
+            transform: "translateY(-5px) scale(1.02)",
+            boxShadow: "0 18px 40px rgba(41,182,246,0.14)",
+            "&::before": {
+              transform: "rotate(20deg) translateX(8%)",
+            },
+          },
+          "&:active": {
+            transform: "translateY(-1px) scale(0.995)",
+            boxShadow: "0 8px 20px rgba(11,14,46,0.08)",
+            position: "relative",
+            overflow: "hidden",
+            borderRadius: 10,
+            textTransform: "none",
+            fontWeight: 700,
+            px: 3,
+            py: 0.9,
+            minWidth: 96,
+            // color: "#1b1a1aff",
+            color: "#fff",
+            // subtle translucent base so backdropFilter works through
+            background:
+              "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+            border: "1px solid rgba(255,255,255,0.14)",
+            // boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 30px rgba(11,14,46,0.06)",
+            backdropFilter: "blur(6px) saturate(120%)",
+            WebkitBackdropFilter: "blur(6px) saturate(120%)",
+
+            // moving sheen + subtle color wash via pseudo elements
+            "&::before": {
+              content: '""',
+              position: "absolute",
+              left: "-40%",
+              top: "-60%",
+              width: "220%",
+              height: "220%",
+              background:
+                "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.16), rgba(255,255,255,0) 18%), linear-gradient(90deg, rgba(123,97,255,0.10), rgba(41,182,246,0.10))",
+              transform: "rotate(20deg)",
+              transition:
+                "transform 560ms cubic-bezier(.2,.9,.2,1), opacity 300ms",
+              opacity: 0.95,
+              pointerEvents: "none",
+            },
+            "&::after": {
+              content: '""',
+              position: "absolute",
+              inset: 0,
+              borderRadius: 12,
+              boxShadow: "inset 0 -8px 24px rgba(0,0,0,0.08)",
+              pointerEvents: "none",
+            },
+
+            // hover/tap states
+            "&:hover": {
+              transform: "translateY(-5px) scale(1.02)",
+              boxShadow: "0 18px 40px rgba(41,182,246,0.14)",
+              "&::before": {
+                transform: "rotate(20deg) translateX(8%)",
+              },
+            },
+            "&:active": {
+              transform: "translateY(-1px) scale(0.995)",
+              boxShadow: "0 8px 20px rgba(11,14,46,0.08)",
+            },
+          },
+        }}
+      >
         <Box
           sx={{
             display: "flex",
@@ -98,6 +212,9 @@ export default function ActivityForm() {
             p: 2,
             background:
               "linear-gradient(90deg, rgba(123,97,255,0.12), rgba(41,182,246,0.08))",
+            borderRadius: 7,
+            height: 120,
+            mt: 2,
           }}
         >
           <Avatar
@@ -204,15 +321,116 @@ export default function ActivityForm() {
             >
               <Button
                 sx={{
+                  position: "relative",
+                  overflow: "hidden",
+                  borderRadius: 10,
                   textTransform: "none",
-                  borderRadius: 3,
+                  fontWeight: 700,
                   px: 3,
-                  py: 1.2,
+                  py: 0.9,
+                  minWidth: 96,
+                  // color: "#1b1a1aff",
+                  color: "#fff",
+                  // subtle translucent base so backdropFilter works through
+                  background:
+                    "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  boxShadow:
+                    "inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 30px rgba(11,14,46,0.06)",
+                  backdropFilter: "blur(6px) saturate(120%)",
+                  WebkitBackdropFilter: "blur(6px) saturate(120%)",
+
+                  // moving sheen + subtle color wash via pseudo elements
+                  "&::before": {
+                    content: '""',
+                    position: "absolute",
+                    left: "-40%",
+                    top: "-60%",
+                    width: "220%",
+                    height: "220%",
+                    background:
+                      "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.16), rgba(255,255,255,0) 18%), linear-gradient(90deg, rgba(123,97,255,0.10), rgba(41,182,246,0.10))",
+                    transform: "rotate(20deg)",
+                    transition:
+                      "transform 560ms cubic-bezier(.2,.9,.2,1), opacity 300ms",
+                    opacity: 0.95,
+                    pointerEvents: "none",
+                  },
+                  "&::after": {
+                    content: '""',
+                    position: "absolute",
+                    inset: 0,
+                    borderRadius: 12,
+                    boxShadow: "inset 0 -8px 24px rgba(0,0,0,0.08)",
+                    pointerEvents: "none",
+                  },
+
+                  // hover/tap states
                   "&:hover": {
-                    background: "linear-gradient(90deg, #ffd2d2ff, #7696ffff)",
-                    border: 0,
+                    transform: "translateY(-5px) scale(1.02)",
+                    boxShadow: "0 18px 40px rgba(41,182,246,0.14)",
+                    "&::before": {
+                      transform: "rotate(20deg) translateX(8%)",
+                    },
+                  },
+                  "&:active": {
+                    transform: "translateY(-1px) scale(0.995)",
+                    boxShadow: "0 8px 20px rgba(11,14,46,0.08)",
+                    position: "relative",
+                    overflow: "hidden",
+                    borderRadius: 10,
+                    textTransform: "none",
+                    fontWeight: 700,
+                    px: 3,
+                    py: 0.9,
+                    minWidth: 96,
+                    // color: "#1b1a1aff",
                     color: "#fff",
-                    py: 1.3,
+                    // subtle translucent base so backdropFilter works through
+                    background:
+                      "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    // boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 30px rgba(11,14,46,0.06)",
+                    backdropFilter: "blur(6px) saturate(120%)",
+                    WebkitBackdropFilter: "blur(6px) saturate(120%)",
+
+                    // moving sheen + subtle color wash via pseudo elements
+                    "&::before": {
+                      content: '""',
+                      position: "absolute",
+                      left: "-40%",
+                      top: "-60%",
+                      width: "220%",
+                      height: "220%",
+                      background:
+                        "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.16), rgba(255,255,255,0) 18%), linear-gradient(90deg, rgba(123,97,255,0.10), rgba(41,182,246,0.10))",
+                      transform: "rotate(20deg)",
+                      transition:
+                        "transform 560ms cubic-bezier(.2,.9,.2,1), opacity 300ms",
+                      opacity: 0.95,
+                      pointerEvents: "none",
+                    },
+                    "&::after": {
+                      content: '""',
+                      position: "absolute",
+                      inset: 0,
+                      borderRadius: 12,
+                      boxShadow: "inset 0 -8px 24px rgba(0,0,0,0.08)",
+                      pointerEvents: "none",
+                    },
+
+                    // hover/tap states
+                    "&:hover": {
+                      transform: "translateY(-5px) scale(1.02)",
+                      boxShadow: "0 18px 40px rgba(41,182,246,0.14)",
+                      "&::before": {
+                        transform: "rotate(20deg) translateX(8%)",
+                      },
+                    },
+                    "&:active": {
+                      transform: "translateY(-1px) scale(0.995)",
+                      boxShadow: "0 8px 20px rgba(11,14,46,0.08)",
+                    },
                   },
                 }}
                 variant="outlined"
@@ -223,14 +441,116 @@ export default function ActivityForm() {
                 type="submit"
                 variant="contained"
                 sx={{
+                  position: "relative",
+                  overflow: "hidden",
+                  borderRadius: 10,
                   textTransform: "none",
-                  background: "linear-gradient(90deg, #7b61ff, #29b6f6)",
-                  color: "#fff",
-                  borderRadius: 3,
+                  fontWeight: 700,
                   px: 3,
-                  py: 1.2,
+                  py: 0.9,
+                  minWidth: 96,
+                  // color: "#1b1a1aff",
+                  color: "#fff",
+                  // subtle translucent base so backdropFilter works through
+                  background:
+                    "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  boxShadow:
+                    "inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 30px rgba(11,14,46,0.06)",
+                  backdropFilter: "blur(6px) saturate(120%)",
+                  WebkitBackdropFilter: "blur(6px) saturate(120%)",
+
+                  // moving sheen + subtle color wash via pseudo elements
+                  "&::before": {
+                    content: '""',
+                    position: "absolute",
+                    left: "-40%",
+                    top: "-60%",
+                    width: "220%",
+                    height: "220%",
+                    background:
+                      "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.16), rgba(255,255,255,0) 18%), linear-gradient(90deg, rgba(123,97,255,0.10), rgba(41,182,246,0.10))",
+                    transform: "rotate(20deg)",
+                    transition:
+                      "transform 560ms cubic-bezier(.2,.9,.2,1), opacity 300ms",
+                    opacity: 0.95,
+                    pointerEvents: "none",
+                  },
+                  "&::after": {
+                    content: '""',
+                    position: "absolute",
+                    inset: 0,
+                    borderRadius: 12,
+                    boxShadow: "inset 0 -8px 24px rgba(0,0,0,0.08)",
+                    pointerEvents: "none",
+                  },
+
+                  // hover/tap states
                   "&:hover": {
-                    background: "linear-gradient(90deg, #29b6f6, #7b61ff)",
+                    transform: "translateY(-5px) scale(1.02)",
+                    boxShadow: "0 18px 40px rgba(41,182,246,0.14)",
+                    "&::before": {
+                      transform: "rotate(20deg) translateX(8%)",
+                    },
+                  },
+                  "&:active": {
+                    transform: "translateY(-1px) scale(0.995)",
+                    boxShadow: "0 8px 20px rgba(11,14,46,0.08)",
+                    position: "relative",
+                    overflow: "hidden",
+                    borderRadius: 10,
+                    textTransform: "none",
+                    fontWeight: 700,
+                    px: 3,
+                    py: 0.9,
+                    minWidth: 96,
+                    // color: "#1b1a1aff",
+                    color: "#fff",
+                    // subtle translucent base so backdropFilter works through
+                    background:
+                      "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    // boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 30px rgba(11,14,46,0.06)",
+                    backdropFilter: "blur(6px) saturate(120%)",
+                    WebkitBackdropFilter: "blur(6px) saturate(120%)",
+
+                    // moving sheen + subtle color wash via pseudo elements
+                    "&::before": {
+                      content: '""',
+                      position: "absolute",
+                      left: "-40%",
+                      top: "-60%",
+                      width: "220%",
+                      height: "220%",
+                      background:
+                        "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.16), rgba(255,255,255,0) 18%), linear-gradient(90deg, rgba(123,97,255,0.10), rgba(41,182,246,0.10))",
+                      transform: "rotate(20deg)",
+                      transition:
+                        "transform 560ms cubic-bezier(.2,.9,.2,1), opacity 300ms",
+                      opacity: 0.95,
+                      pointerEvents: "none",
+                    },
+                    "&::after": {
+                      content: '""',
+                      position: "absolute",
+                      inset: 0,
+                      borderRadius: 12,
+                      boxShadow: "inset 0 -8px 24px rgba(0,0,0,0.08)",
+                      pointerEvents: "none",
+                    },
+
+                    // hover/tap states
+                    "&:hover": {
+                      transform: "translateY(-5px) scale(1.02)",
+                      boxShadow: "0 18px 40px rgba(41,182,246,0.14)",
+                      "&::before": {
+                        transform: "rotate(20deg) translateX(8%)",
+                      },
+                    },
+                    "&:active": {
+                      transform: "translateY(-1px) scale(0.995)",
+                      boxShadow: "0 8px 20px rgba(11,14,46,0.08)",
+                    },
                   },
                 }}
                 disabled={updateActivity.isPending || createActivity.isPending}

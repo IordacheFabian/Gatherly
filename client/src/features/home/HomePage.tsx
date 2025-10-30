@@ -26,13 +26,13 @@ export default function HomePage() {
         justifyContent: "center",
         height: "100vh",
         overflow: "hidden",
-        backgroundImage:
-          "linear-gradient(90deg, rgba(123,97,255,0.95) 0%, rgba(41,182,246,0.92) 70%)",
-        // entry animation for the whole page
-        "@keyframes fadeInUp": {
-          "0%": { opacity: 0, transform: "translateY(18px) scale(0.995)" },
-          "100%": { opacity: 1, transform: "translateY(0) scale(1)" },
-        },
+        backgroundSize: "cover",
+        backgroundPosition: "center center",
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
+        minHeight: "100vh",
+        background:
+          "linear-gradient(135deg, #1d1a27 0%, #683a54ff 50%, #8e3e3eff 100%)",
       }}
     >
       {/* decorative floating bubbles */}
@@ -59,7 +59,7 @@ export default function HomePage() {
             bgcolor: "rgba(255,255,255,0.06)",
             px: 3,
             py: 2,
-            borderRadius: 3,
+            borderRadius: 999,
             boxShadow: "0 8px 30px rgba(11,14,46,0.12)",
             backdropFilter: "blur(6px) saturate(120%)",
           }}
@@ -68,7 +68,7 @@ export default function HomePage() {
             sx={{
               width: isSmall ? 72 : 110,
               height: isSmall ? 72 : 110,
-              borderRadius: 3,
+              borderRadius: 999,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -82,11 +82,12 @@ export default function HomePage() {
                 width: isSmall ? 52 : 80,
                 height: isSmall ? 52 : 100,
                 color: "#fff",
+                borderRadius: 999
               }}
             />
           </Box>
 
-          <Box sx={{ textAlign: "left" }}>
+          <Box sx={{ textAlign: "left"}}>
             <Typography
               variant={isSmall ? "h4" : "h2"}
               sx={{
@@ -129,19 +130,119 @@ export default function HomePage() {
           variant="contained"
           sx={{
             height: isSmall ? 64 : 84,
-            borderRadius: 6,
             fontSize: isSmall ? "1.05rem" : "1.25rem",
             px: 5,
             mt: 1.5,
+            position: "relative",
+            overflow: "hidden",
+            borderRadius: 10,
             textTransform: "none",
-            background: "linear-gradient(45deg, #7b61ff, #29b6f6)",
-            boxShadow: "0 12px 40px rgba(41,182,246,0.14)",
-            transition: "transform 200ms ease, box-shadow 200ms ease",
-            "&:hover": {
-              transform: "translateY(-6px) scale(1.02)",
-              boxShadow: "0 18px 60px rgba(41,182,246,0.18)",
+            fontWeight: 700,
+            py: 0.9,
+            minWidth: 96,
+            // color: "#1b1a1aff",
+            color: "#fff",
+            // subtle translucent base so backdropFilter works through
+            background:
+              "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+            border: "1px solid rgba(255,255,255,0.14)",
+            boxShadow:
+              "inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 30px rgba(11,14,46,0.06)",
+            backdropFilter: "blur(6px) saturate(120%)",
+            WebkitBackdropFilter: "blur(6px) saturate(120%)",
+
+            // moving sheen + subtle color wash via pseudo elements
+            "&::before": {
+              content: '""',
+              position: "absolute",
+              left: "-40%",
+              top: "-60%",
+              width: "220%",
+              height: "220%",
+              background:
+                "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.16), rgba(255,255,255,0) 18%), linear-gradient(90deg, rgba(123,97,255,0.10), rgba(41,182,246,0.10))",
+              transform: "rotate(20deg)",
+              transition:
+                "transform 560ms cubic-bezier(.2,.9,.2,1), opacity 300ms",
+              opacity: 0.95,
+              pointerEvents: "none",
             },
-            "&:active": { transform: "translateY(-2px) scale(0.997)" },
+            "&::after": {
+              content: '""',
+              position: "absolute",
+              inset: 0,
+              borderRadius: 12,
+              boxShadow: "inset 0 -8px 24px rgba(0,0,0,0.08)",
+              pointerEvents: "none",
+            },
+
+            // hover/tap states
+            "&:hover": {
+              transform: "translateY(-5px) scale(1.02)",
+              boxShadow: "0 18px 40px rgba(41,182,246,0.14)",
+              "&::before": {
+                transform: "rotate(20deg) translateX(8%)",
+              },
+            },
+            "&:active": {
+              transform: "translateY(-1px) scale(0.995)",
+              boxShadow: "0 8px 20px rgba(11,14,46,0.08)",
+              position: "relative",
+              overflow: "hidden",
+              borderRadius: 10,
+              textTransform: "none",
+              fontWeight: 700,
+              px: 3,
+              py: 0.9,
+              minWidth: 96,
+              // color: "#1b1a1aff",
+              color: "#fff",
+              // subtle translucent base so backdropFilter works through
+              background:
+                "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+              border: "1px solid rgba(255,255,255,0.14)",
+              // boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 30px rgba(11,14,46,0.06)",
+              backdropFilter: "blur(6px) saturate(120%)",
+              WebkitBackdropFilter: "blur(6px) saturate(120%)",
+
+              // moving sheen + subtle color wash via pseudo elements
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                left: "-40%",
+                top: "-60%",
+                width: "220%",
+                height: "220%",
+                background:
+                  "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.16), rgba(255,255,255,0) 18%), linear-gradient(90deg, rgba(123,97,255,0.10), rgba(41,182,246,0.10))",
+                transform: "rotate(20deg)",
+                transition:
+                  "transform 560ms cubic-bezier(.2,.9,.2,1), opacity 300ms",
+                opacity: 0.95,
+                pointerEvents: "none",
+              },
+              "&::after": {
+                content: '""',
+                position: "absolute",
+                inset: 0,
+                borderRadius: 12,
+                boxShadow: "inset 0 -8px 24px rgba(0,0,0,0.08)",
+                pointerEvents: "none",
+              },
+
+              // hover/tap states
+              "&:hover": {
+                transform: "translateY(-5px) scale(1.02)",
+                boxShadow: "0 18px 40px rgba(41,182,246,0.14)",
+                "&::before": {
+                  transform: "rotate(20deg) translateX(8%)",
+                },
+              },
+              "&:active": {
+                transform: "translateY(-1px) scale(0.995)",
+                boxShadow: "0 8px 20px rgba(11,14,46,0.08)",
+              },
+            },
           }}
         >
           Take me to the activities
