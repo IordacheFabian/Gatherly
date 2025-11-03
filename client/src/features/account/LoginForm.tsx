@@ -254,7 +254,8 @@ export default function LoginForm() {
               fontWeight: 700,
               px: 3,
               py: 0.9,
-              minWidth: 96,
+              // minWidth: 96,
+              width: "50%",
               // color: "#1b1a1aff",
               color: "#fff",
               // subtle translucent base so backdropFilter works through
@@ -305,7 +306,7 @@ export default function LoginForm() {
               fontWeight: 700,
               px: 3,
               py: 0.9,
-              minWidth: 96,
+              // minWidth: 96,
               // color: "#1b1a1aff",
               color: "#fff",
               // subtle translucent base so backdropFilter works through
