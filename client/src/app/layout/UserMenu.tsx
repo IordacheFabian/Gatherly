@@ -261,7 +261,7 @@ export default function UserMenu() {
           <ListItemText>Create activity</ListItemText>
         </MenuItem>
 
-        <MenuItem component={Link} to="/profile" sx={{ gap: 1.25 }}>
+        <MenuItem component={Link} to={`/profiles/${currentUser?.id}`} sx={{ gap: 1.25 }}>
           <ListItemIcon>
             <Person fontSize="small" />
           </ListItemIcon>

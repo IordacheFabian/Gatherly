@@ -8,7 +8,6 @@ export default function ActivityDashboard() {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   return (
     <>
-    b
       <Grid container spacing={3}>
         {isMobile && (
           <Grid>

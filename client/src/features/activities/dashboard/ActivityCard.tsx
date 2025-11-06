@@ -83,8 +83,6 @@ export default function ActivityCard({ activity }: Props) {
           "inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 30px rgba(11,14,46,0.06)",
         backdropFilter: "blur(6px) saturate(120%)",
         WebkitBackdropFilter: "blur(6px) saturate(120%)",
-
-        
       }}
     >
       <Box
@@ -101,12 +99,28 @@ export default function ActivityCard({ activity }: Props) {
         }}
       >
         <Avatar
-          src={`/images/categoryImages/${(
-            activity.category || ""
-          ).toLowerCase()}.jpg`}
-          alt={activity.category}
-          sx={{ width: 64, height: 64, borderRadius: 2 }}
-        />
+          src={activity.hostImageUrl}
+          alt="Image of host"
+          sx={{ width: 64, height: 64, borderRadius: 999 }}
+        >
+          {activity.hostImageUrl ? (
+            <img
+              src={activity.hostImageUrl}
+              alt={activity.hostDisplayName}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                borderRadius: 999,
+              }}
+            />
+          ) : (
+            <Avatar
+              alt={activity.category}
+              sx={{ width: 64, height: 64, borderRadius: 2 }}
+            />
+          )}
+        </Avatar>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography variant="h6" noWrap sx={{ fontWeight: 600 }}>
             {activity.title}
@@ -127,7 +141,17 @@ export default function ActivityCard({ activity }: Props) {
           </Stack>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
             <Box sx={{ color: "lightgray" }}>
-              Hosted by <Link to={`/profiles/${activity.hostId}`} style={{color: "white", textDecoration: 'none', fontSize: "14px"}}>{activity.hostDisplayName}</Link>
+              Hosted by{" "}
+              <Link
+                to={`/profiles/${activity.hostId}`}
+                style={{
+                  color: "white",
+                  textDecoration: "none",
+                  fontSize: "14px",
+                }}
+              >
+                {activity.hostDisplayName}
+              </Link>
             </Box>
           </Typography>
         </Box>
@@ -174,7 +198,7 @@ export default function ActivityCard({ activity }: Props) {
 
               <Box>
                 {(activity.isHost || activity.isGoing) && (
-                  <Chip label={label} color={color} sx={{ borderRadius: 3,  }} />
+                  <Chip label={label} color={color} sx={{ borderRadius: 3 }} />
                 )}
                 {activity.isCancelled && (
                   <Chip
@@ -196,11 +220,16 @@ export default function ActivityCard({ activity }: Props) {
                 {activity.city} · {activity.venue}
               </Typography>
             </Stack>
-            <Stack direction="row" spacing={1} alignItems="center" sx={{mt: 2}}>
-                {activity.attendees.map(att => (
-                  <AvatarPopover profile={att} key={att.id} />
-                ))}
-              </Stack>
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              sx={{ mt: 2 }}
+            >
+              {activity.attendees.map((att) => (
+                <AvatarPopover profile={att} key={att.id} />
+              ))}
+            </Stack>
           </Box>
 
           <Stack spacing={1} alignItems="flex-end">
