@@ -84,6 +84,15 @@ const queryClient = useQueryClient();
         return photos?.filter(x => x.id !== photoId);
       })
     }
+  });
+
+  const editProfile = useMutation({
+    mutationFn: async (profile: Profile) => {
+      await agent.put('/profiles', profile);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['profiles']});
+    }
   })
 
   const isCurrentUser = useMemo(() => {
@@ -99,5 +108,6 @@ const queryClient = useQueryClient();
     uploadPhoto,
     setMainPhoto,
     deletePhoto,
+    editProfile,
   };
 };
