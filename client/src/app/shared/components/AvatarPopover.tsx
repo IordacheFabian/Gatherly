@@ -27,6 +27,10 @@ export default function AvatarPopover({profile}: Props) {
       <Avatar
         alt={profile.displayName + " image"}
         src={profile.imageUrl}
+        sx={{
+          border: profile.following ? 3 : 0,
+          borderColor: "rgba(70, 70, 70, 0.59)",
+        }}
         component={Link}
         to={`/profiles/${profile.id}`}
         onMouseEnter={handlePopoverOpen}
@@ -35,7 +39,14 @@ export default function AvatarPopover({profile}: Props) {
       <Popover
         id="mouse-over-popover"
         sx={{ pointerEvents: "none" }}
-        PaperProps={{sx: {borderRadius: 10, overflow: "visible", bgcolor: "transparent", boxShadow: "none"}}}
+        PaperProps={{
+          sx: {
+            borderRadius: 10,
+            overflow: "visible",
+            bgcolor: "transparent",
+            boxShadow: "none",
+          },
+        }}
         open={open}
         anchorEl={anchorEl}
         anchorOrigin={{
@@ -49,7 +60,7 @@ export default function AvatarPopover({profile}: Props) {
         onClose={handlePopoverClose}
         disableRestoreFocus
       >
-        <ProfileCard profile={profile}  />
+        <ProfileCard profile={profile} />
       </Popover>
     </>
   );

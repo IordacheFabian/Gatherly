@@ -1,6 +1,5 @@
 import React from "react";
 import MenuIcon from "@mui/icons-material/Menu";
-import GroupIcon from "@mui/icons-material/Group";
 import HomeIcon from "@mui/icons-material/Home";
 import InfoIcon from "@mui/icons-material/Info";
 import ContactMailIcon from "@mui/icons-material/ContactMail";
@@ -46,55 +45,13 @@ export default function NavBar() {
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const { currentUser } = useAccount();
 
-  // const location = useLocation();
-
-  // if (location.pathname.startsWith("/login")) return null;
-
-  // ------------------------- must be added here when I redesign the app ----------------------------
-  //   <AppBar
-  // position="sticky"
-  // elevation={0}
-  // sx={{
-  //   // frosted glass
-  //   background: "linear-gradient(180deg, rgba(255,255,255,0.60), rgba(255,255,255,0.28))",
-  //   backdropFilter: "blur(8px) saturate(120%)",
-  //   WebkitBackdropFilter: "blur(8px) saturate(120%)",
-  //   borderBottom: "1px solid rgba(255,255,255,0.14)",
-  //   boxShadow: "0 8px 30px rgba(11,14,46,0.06)",
-  //   // dark mode tweak
-  //   "@media (prefers-color-scheme: dark)": {
-  //     background: "linear-gradient(180deg, rgba(8,10,18,0.52), rgba(8,10,18,0.32))",
-  //     borderBottom: "1px solid rgba(255,255,255,0.06)",
-  //     boxShadow: "0 8px 30px rgba(0,0,0,0.5)",
-  //   },
-  //   "& .MuiContainer-root": {
-  //     borderRadius: "0 0 12px 12px",
-  //     overflow: "visible",
-  //     // subtle inner glow to separate nav from content
-  //     backgroundClip: "padding-box",
-  //   },
-  // }}
-  // >
-  //  -------------------------------------------------------------------------------------------
 
   return (
     <>
       <AppBar
         position="sticky"
         elevation={3}
-        // sx={{
-        //   background:
-        //     "linear-gradient(90deg, rgba(123,97,255,0.95) 0%, rgba(41,182,246,0.92) 70%)",
-        //   backdropFilter: "saturate(90%) blur(1px)",
-        //   // give the inner container a subtle rounded bottom to echo card corners
-        //   "& .MuiContainer-root": {
-        //     borderRadius: "0 0 12px 12px",
-        //     overflow: "visible",
-        //   },
-
-        // }}
         sx={{
-          // position: "relative",
           overflow: "hidden",
 
           textTransform: "none",
@@ -102,9 +59,7 @@ export default function NavBar() {
           px: 3,
           py: 0.9,
           minWidth: 96,
-          // color: "#1b1a1aff",
           color: "white",
-          // subtle translucent base so backdropFilter works through
           background:
             "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
           border: "1px solid rgba(255,255,255,0.14)",
@@ -113,7 +68,6 @@ export default function NavBar() {
           backdropFilter: "blur(6px) saturate(120%)",
           WebkitBackdropFilter: "blur(6px) saturate(120%)",
 
-          // moving sheen + subtle color wash via pseudo elements
           "&::before": {
             content: '""',
             position: "absolute",
@@ -143,10 +97,18 @@ export default function NavBar() {
           <Toolbar
             sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <IconButton color="inherit" edge="start" sx={{ mr: 1 }}>
-                <GroupIcon fontSize="large" />
-              </IconButton>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mr: 5 }}>
+              <Box
+                component="img"
+                src="/images/logo/eventure-logo.png"
+                alt="Eventure Logo"
+                sx={{
+                  height: 32,
+                  ml: 1,
+                  display: "inline-block",
+                  color: "white",
+                }}
+              />
               <Typography
                 variant="h5"
                 fontWeight="700"
@@ -154,11 +116,10 @@ export default function NavBar() {
                 to="/"
                 sx={{ color: "inherit", textDecoration: "none" }}
               >
-                Reactivities
+                Eventure
               </Typography>
             </Box>
 
-            {/* center nav (hidden on small screens) */}
             {!isMobile && (
               <Box sx={{ display: "flex", gap: 3, alignItems: "center" }}>
                 <Button
@@ -303,32 +264,6 @@ export default function NavBar() {
             )}
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              {/* {!isMobile && currentUser && (
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  startIcon={<AddIcon />}
-                  sx={{
-                    background:
-                      "linear-gradient(90deg, #7b61ff 0%, #29b6f6 100%)",
-                    color: "common.white",
-                    borderRadius: 3,
-                    textTransform: "none",
-                    height: 40,
-                    px: 3,
-                    py: 0.2,
-                    boxShadow: "0 8px 22px rgba(41,182,246,0.12)",
-                    "&:hover": {
-                      transform: "translateY(-1px)",
-                      boxShadow: "0 12px 34px rgba(123,97,255,0.16)",
-                    },
-                  }}
-                  component={NavLink}
-                  to="/createActivity"
-                >
-                  Create activity
-                </Button>
-              )} */}
               {!isMobile && currentUser && <UserMenu />}
 
               {!isMobile && !currentUser && (
@@ -336,21 +271,6 @@ export default function NavBar() {
                   variant="contained"
                   color="secondary"
                   startIcon={<AddIcon />}
-                  // sx={{
-                  //   background:
-                  //     "linear-gradient(90deg, #7b61ff 0%, #29b6f6 100%)",
-                  //   color: "common.white",
-                  //   borderRadius: 3,
-                  //   textTransform: "none",
-                  //   height: 40,
-                  //   px: 3,
-                  //   py: 0.2,
-                  //   boxShadow: "0 8px 22px rgba(41,182,246,0.12)",
-                  //   "&:hover": {
-                  //     transform: "translateY(-1px)",
-                  //     boxShadow: "0 12px 34px rgba(123,97,255,0.16)",
-                  //   },
-                  // }}
 
                   sx={{
                     position: "relative",
@@ -425,16 +345,13 @@ export default function NavBar() {
         </Container>
       </AppBar>
 
-      {/* profile menu handled inside UserMenu component */}
-
-      {/* drawer for mobile */}
       <Drawer
         anchor="right"
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
       >
         <Box
-          sx={{ width: 260,  }}
+          sx={{ width: 260 }}
           role="presentation"
           onClick={() => setDrawerOpen(false)}
         >

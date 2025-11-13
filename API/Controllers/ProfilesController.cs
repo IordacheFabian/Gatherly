@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using Application.Profiles.Commands;
 using Application.Profiles.DTOs;
 using Application.Profiles.Queries;
@@ -43,5 +44,17 @@ public class ProfilesController : BaseApiController
     public async Task<ActionResult> EditProfile(EditProfileDto userProfile)
     {
         return HandleResult(await Mediator.Send(new EditProfile.Command { UserProfile = userProfile }));
+    }
+
+    [HttpPost("{userId}/follow")]
+    public async Task<ActionResult> FollowToggle(string userId)
+    {
+        return HandleResult(await Mediator.Send(new FollowToggle.Command { TargetUserId = userId }));
+    }
+
+    [HttpGet("{userId}/follow-list")]
+    public async Task<ActionResult> GetFollowings(string userId, string predicate)
+    {
+        return HandleResult(await Mediator.Send(new GetFollowings.Query { UserId = userId, Predicate = predicate }));
     }
 }

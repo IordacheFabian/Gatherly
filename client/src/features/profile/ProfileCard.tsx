@@ -15,7 +15,6 @@ type Props = {
 };
 
 export default function ProfileCard({ profile }: Props) {
-  const following = false;
 
   return (
     <Link to={`/profiles/${profile.id}`} style={{ textDecoration: "none" }}>
@@ -23,21 +22,15 @@ export default function ProfileCard({ profile }: Props) {
         sx={{
           borderRadius: 10,
           p: 3,
-          maxWidth: 300,
+          maxWidth: 230,
           textDecoration: "none",
-          // borderRadius: 5,
           overflow: "visible",
           position: "relative",
-          // overflow: "hidden",
-          // borderRadius: 10,
           textTransform: "none",
           fontWeight: 700,
           px: 3,
           py: 0.9,
-          minWidth: 96,
-          // color: "#1b1a1aff",
           color: "#fff",
-          // subtle translucent base so backdropFilter works through
           background:
             "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
           border: "3px solid rgba(255,255,255,0.14)",
@@ -50,12 +43,12 @@ export default function ProfileCard({ profile }: Props) {
       >
         <CardMedia
           component="img"
-          src={profile?.imageUrl || "/image/user.png"}
-          sx={{ width: '100%', zIndex: 50, borderRadius: 8, mt: 1.5 }}
+          src={profile?.imageUrl || "/images/user.png"}
+          sx={{ width: "100%",  borderRadius: 8, mt: 1.5 }}
           alt={profile.displayName + " image"}
         />
         <CardContent>
-          <Box display="flex" flexDirection='column' gap={1}>
+          <Box display="flex" flexDirection="column" justifyContent="center" gap={1}>
             <Typography variant="h5">{profile.displayName}</Typography>
             {profile.bio && (
               <Typography
@@ -63,19 +56,37 @@ export default function ProfileCard({ profile }: Props) {
                 sx={{
                   textOverflow: "ellipsis",
                   overflow: "hidden",
-                  whiteSpace: "nowrap"
+                  whiteSpace: "nowrap",
                 }}
               >
                 {profile.bio}
               </Typography>
             )}
 
-            {following && (
+            {profile.following && (
               <Chip
                 size="small"
                 label="Following"
                 color="secondary"
                 variant="outlined"
+                sx={{
+                  width: "fit-content",
+                  position: "relative",
+                  overflow: "hidden",
+                  borderRadius: 10,
+                  textTransform: "none",
+                  fontWeight: 700,
+                  px: 3,
+                  py: 0.9,
+                  color: "#1b1a1aff",
+                  background:
+                    "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  boxShadow:
+                    "inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 30px rgba(11,14,46,0.06)",
+                  backdropFilter: "blur(6px) saturate(120%)",
+                  WebkitBackdropFilter: "blur(6px) saturate(120%)",
+                }}
               />
             )}
           </Box>
@@ -86,11 +97,13 @@ export default function ProfileCard({ profile }: Props) {
             display: "flex",
             alignItems: "center",
             justifyContent: "start",
-            mb: 1.5
+            mb: 1,
           }}
         >
           <Person />
-          <Typography sx={{ ml: 1 }}> 2000 Followers</Typography>
+          <Typography sx={{ ml: 1, fontSize: 16 }}>
+            {profile.followersCount} Followers
+          </Typography>
         </Box>
       </Card>
     </Link>

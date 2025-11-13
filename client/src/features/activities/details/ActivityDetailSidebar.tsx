@@ -10,11 +10,9 @@ import {
 
 type Props = {
   activity: Activity;
-}
+};
 
 export default function ActivityDetailsSidebar({ activity }: Props) {
-  
-
   return (
     <Card
       sx={{
@@ -106,9 +104,11 @@ export default function ActivityDetailsSidebar({ activity }: Props) {
                   <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
                     {a.displayName}
                   </Typography>
-                  <Typography variant="caption" color="lightgray">
-                    {activity.isHost  ? "Following" : "Not Following"}
-                  </Typography>
+                  {a.following && (
+                    <Typography variant="caption" color="lightgray">
+                      Following
+                    </Typography>
+                  )}
                 </Box>
               </Stack>
 
@@ -121,7 +121,6 @@ export default function ActivityDetailsSidebar({ activity }: Props) {
                     sx={{ borderRadius: 1 }}
                   />
                 )}
-                
               </Stack>
             </Box>
           ))}
