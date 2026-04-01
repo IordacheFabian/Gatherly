@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
+  AlertTriangle,
   Calendar,
   MapPin,
   Users,
@@ -110,6 +111,7 @@ const ActivityDetails = () => {
 
   const host = isUserHost(activity, user?.id);
   const joined = isUserAttending(activity, user?.id);
+  const mapQuery = encodeURIComponent(`${activity.venue}, ${activity.city}`);
 
   return (
     <PageTransition>
@@ -136,6 +138,13 @@ const ActivityDetails = () => {
         <div className="container mx-auto px-6 -mt-20 relative z-10 pb-20">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
+              {activity.isCancelled && (
+                <div className="glass border border-destructive/40 text-destructive p-4 rounded-xl flex items-center gap-3">
+                  <AlertTriangle className="w-5 h-5" />
+                  <span>This activity is currently cancelled.</span>
+                </div>
+              )}
+
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -234,6 +243,9 @@ const ActivityDetails = () => {
                       </div>
                     </div>
                   ))}
+                  {!comments.length && (
+                    <p className="text-sm text-muted-foreground">No comments yet.</p>
+                  )}
                 </div>
                 {user ? (
                   <div className="mt-4 flex gap-2">
@@ -255,6 +267,44 @@ const ActivityDetails = () => {
                 ) : (
                   <p className="text-sm text-muted-foreground mt-4">Log in to join the discussion.</p>
                 )}
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+                className="glass p-6 rounded-xl"
+              >
+                <h2 className="font-display font-semibold text-lg mb-4 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-primary" /> Attendees
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {activity.attendees.map((attendee) => (
+                    <Link
+                      key={attendee.id}
+                      to={`/profile/${attendee.id}`}
+                      className="flex items-center gap-3 rounded-lg bg-muted/20 p-3 hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center text-sm font-bold text-primary-foreground overflow-hidden">
+                        {attendee.imageUrl ? (
+                          <img src={attendee.imageUrl} alt={attendee.displayName} className="w-full h-full object-cover" />
+                        ) : (
+                          attendee.displayName
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .slice(0, 2)
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">{attendee.displayName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {attendee.id === activity.hostId ? "Host" : attendee.following ? "Following" : "Attendee"}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               </motion.div>
             </div>
 
@@ -283,9 +333,19 @@ const ActivityDetails = () => {
                 </div>
 
                 {host ? (
-                  <Button className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80">
-                    You host this activity
-                  </Button>
+                  <div className="space-y-3">
+                    <Button className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80">
+                      You host this activity
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => attendMutation.mutate()}
+                      disabled={attendMutation.isPending}
+                    >
+                      {activity.isCancelled ? "Reopen activity" : "Cancel activity"}
+                    </Button>
+                  </div>
                 ) : user ? (
                   <Button
                     variant={joined ? "outline" : "default"}
@@ -300,6 +360,27 @@ const ActivityDetails = () => {
                     <Button className="w-full">Log in to join</Button>
                   </Link>
                 )}
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="glass p-6 rounded-xl"
+              >
+                <h3 className="font-display font-semibold mb-4">Location</h3>
+                <p className="text-sm text-muted-foreground mb-2">{activity.venue}, {activity.city}</p>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Coordinates: {activity.latitude}, {activity.longitude}
+                </p>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary text-sm hover:underline"
+                >
+                  Open in Google Maps
+                </a>
               </motion.div>
             </div>
           </div>

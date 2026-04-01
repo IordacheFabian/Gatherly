@@ -18,8 +18,13 @@ public class UserAccessor(IHttpContextAccessor httpContextAccessor, AppDbContext
 
     public string GetUserId()
     {
-        return httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier)
+        return GetUserIdOrNull()
             ?? throw new Exception("User not found");
+    }
+
+    public string? GetUserIdOrNull()
+    {
+        return httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
     }
 
     public async Task<User> GetUserWithPhotosAsync()

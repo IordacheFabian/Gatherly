@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth-context";
+import { getErrorMessage } from "@/lib/error-utils";
 
 type Mode = "login" | "register";
 
@@ -19,6 +20,7 @@ const Auth = () => {
 
   const { login, register } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -31,9 +33,10 @@ const Auth = () => {
       } else {
         await register({ displayName, email, password });
       }
-      navigate("/");
+      const redirectTo = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? "/";
+      navigate(redirectTo, { replace: true });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Authentication failed");
+      setError(getErrorMessage(e, "Authentication failed"));
     } finally {
       setSubmitting(false);
     }

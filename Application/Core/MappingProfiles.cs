@@ -20,6 +20,7 @@ public class MappingProfiles : Profile
         CreateMap<EditActivityDto, Activity>();
         
         CreateMap<Activity, ActivityDto>()
+            .ForMember(d => d.ImageUrl, o => o.MapFrom(s => s.ImageUrl))
             .ForMember(d => d.HostDisplayName, o => o.MapFrom(s =>
                 s.Attendees.FirstOrDefault(a => a.IsHost)!.User.DisplayName))
             .ForMember(d => d.HostId, o => o.MapFrom(s =>

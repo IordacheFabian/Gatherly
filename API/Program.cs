@@ -27,7 +27,22 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 {
     opt.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
-builder.Services.AddCors();
+builder.Services.AddCors(opt =>
+{
+    opt.AddPolicy("CorsPolicy", policy =>
+    {
+        policy
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials()
+            .WithOrigins(
+                "http://localhost:8080",
+                "https://localhost:8080",
+                "http://localhost:3000",
+                "https://localhost:3000"
+            );
+    });
+});
 
 builder.Services.AddSignalR();
 builder.Services.AddMediatR(x =>
@@ -63,11 +78,6 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 app.UseMiddleware<ExceptionMiddleware>();
-app.UseCors(x => x
-    .AllowAnyHeader()
-    .AllowAnyMethod()
-    .AllowCredentials()
-    .WithOrigins("https://localhost:3000"));
 app.UseCors("CorsPolicy"); 
 
 app.UseAuthentication();

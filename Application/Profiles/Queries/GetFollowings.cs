@@ -31,7 +31,7 @@ public class GetFollowings
                         .Where(x => x.TargetId == request.UserId)
                         .Select(x => x.Observer)
                         .ProjectTo<UserProfile>(mapper.ConfigurationProvider,
-                            new {currentUserId = userAccessor.GetUserId()})
+                            new {currentUserId = userAccessor.GetUserIdOrNull()})
                         .ToListAsync(cancellationToken);
                     break;
                 case "followings":
@@ -39,7 +39,7 @@ public class GetFollowings
                         .Where(x => x.ObserverId == request.UserId)
                         .Select(x => x.Target)
                         .ProjectTo<UserProfile>(mapper.ConfigurationProvider,
-                            new {currentUserId = userAccessor.GetUserId()})
+                            new {currentUserId = userAccessor.GetUserIdOrNull()})
                         .ToListAsync(cancellationToken);
                     break;
             }

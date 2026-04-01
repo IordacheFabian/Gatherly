@@ -24,7 +24,7 @@ public class GetProfile
         {
             var profile = await context.Users
                 .ProjectTo<UserProfile>(mapper.ConfigurationProvider,
-                    new {currentUserId = userAccessor.GetUserId()})
+                    new {currentUserId = userAccessor.GetUserIdOrNull()})
                 .SingleOrDefaultAsync(x => x.Id == request.UserId, cancellationToken);
             
             return profile == null 

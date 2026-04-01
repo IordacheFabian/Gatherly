@@ -11,6 +11,10 @@ export const categoryOptions = [
 ];
 
 export function getActivityImage(activity: Activity) {
+  if (activity.imageUrl) {
+    return activity.imageUrl;
+  }
+
   const key = activity.category.toLowerCase();
 
   if (key.includes("food") || key.includes("drinks")) {

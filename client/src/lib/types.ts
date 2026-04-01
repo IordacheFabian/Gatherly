@@ -20,6 +20,7 @@ export interface Activity {
   category: string;
   date: string;
   isCancelled: boolean;
+  imageUrl?: string | null;
   hostDisplayName: string;
   hostId: string;
   city: string;

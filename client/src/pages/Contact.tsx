@@ -74,9 +74,9 @@ const Contact = () => {
               <h3 className="font-display font-semibold mb-4">Contact Info</h3>
               <div className="space-y-4">
                 {[
-                  { icon: Mail, label: "hello@reactivities.app" },
+                  { icon: Mail, label: "info@reactivities.app" },
                   { icon: Phone, label: "+1 (555) 123-4567" },
-                  { icon: MapPin, label: "San Francisco, CA" },
+                  { icon: MapPin, label: "Romania, AG" },
                 ].map(({ icon: Icon, label }) => (
                   <div key={label} className="flex items-center gap-3 text-sm text-muted-foreground">
                     <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">

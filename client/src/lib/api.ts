@@ -23,10 +23,12 @@ class ApiError extends Error {
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const isFormData = init.body instanceof FormData;
+
   const response = await fetch(`${API_BASE}${path}`, {
     credentials: "include",
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(init.headers ?? {}),
     },
     ...init,
@@ -42,9 +44,15 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     : await response.text();
 
   if (!response.ok) {
+    const fieldErrors =
+      typeof payload === "object" && payload !== null && "errors" in payload
+        ? (payload as { errors?: Record<string, string[]> }).errors
+        : undefined;
     const message =
       typeof payload === "string"
         ? payload
+        : fieldErrors
+          ? Object.values(fieldErrors)[0]?.[0] || "Validation failed"
         : (payload as { title?: string; detail?: string })?.detail ||
           (payload as { title?: string })?.title ||
           "Request failed";
@@ -107,10 +115,29 @@ export const activitiesApi = {
     request<void>(`/api/activities/${id}/attend`, {
       method: "POST",
     }),
+  uploadPhoto: async (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(`/api/activities/${id}/photo`, {
+      method: "POST",
+      credentials: "include",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new ApiError(text || "Failed to upload activity photo", response.status);
+    }
+
+    return response.json() as Promise<{ publicId: string; url: string }>;
+  },
 };
 
 export const profilesApi = {
   getProfile: (userId: string) => request<UserProfile>(`/api/profiles/${userId}`),
+  getActivities: (userId: string, predicate: "future" | "past" | "hosting") =>
+    request<Activity[]>(`/api/profiles/${userId}/activities?predicate=${predicate}`),
   editProfile: (data: { displayName: string; bio?: string | null }) =>
     request<void>("/api/profiles", {
       method: "PUT",

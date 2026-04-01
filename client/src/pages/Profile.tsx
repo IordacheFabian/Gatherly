@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  Activity,
   Camera,
   Edit,
   Heart,
@@ -15,15 +16,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import ActivityCard from "@/components/ActivityCard";
 import PageTransition from "@/components/PageTransition";
 import { profilesApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 
-type TabKey = "photos" | "details" | "followers" | "followings";
+type TabKey = "photos" | "details" | "activities" | "followers" | "followings";
+type ActivityPredicate = "future" | "past" | "hosting";
 
 const tabs: Array<{ id: TabKey; label: string; icon: typeof ImageIcon }> = [
   { id: "photos", label: "Photos", icon: ImageIcon },
   { id: "details", label: "Profile Details", icon: User },
+  { id: "activities", label: "Activities", icon: Activity },
   { id: "followers", label: "Followers", icon: Users },
   { id: "followings", label: "Following", icon: Star },
 ];
@@ -37,6 +41,7 @@ const Profile = () => {
   const isOwnProfile = Boolean(user?.id && targetUserId === user.id);
 
   const [activeTab, setActiveTab] = useState<TabKey>("photos");
+  const [activityPredicate, setActivityPredicate] = useState<ActivityPredicate>("future");
   const [displayNameDraft, setDisplayNameDraft] = useState("");
   const [bioDraft, setBioDraft] = useState("");
 
@@ -62,6 +67,12 @@ const Profile = () => {
     queryKey: ["profile-follow", targetUserId, "followings"],
     queryFn: () => profilesApi.getFollowList(targetUserId!, "followings"),
     enabled: Boolean(targetUserId) && activeTab === "followings",
+  });
+
+  const activitiesQuery = useQuery({
+    queryKey: ["profile-activities", targetUserId, activityPredicate],
+    queryFn: () => profilesApi.getActivities(targetUserId!, activityPredicate),
+    enabled: Boolean(targetUserId) && activeTab === "activities",
   });
 
   const followMutation = useMutation({
@@ -111,6 +122,7 @@ const Profile = () => {
   const photos = photosQuery.data ?? [];
   const followEntries =
     activeTab === "followers" ? followersQuery.data ?? [] : followingsQuery.data ?? [];
+  const profileActivities = activitiesQuery.data ?? [];
 
   const initials = useMemo(() => {
     const name = profile?.displayName ?? "User";
@@ -332,6 +344,49 @@ const Profile = () => {
                     </Button>
                   )}
                 </div>
+              </motion.div>
+            )}
+
+            {activeTab === "activities" && (
+              <motion.div
+                key="activities"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+              >
+                <div className="flex gap-2 mb-6">
+                  {([
+                    ["future", "Upcoming"],
+                    ["hosting", "Hosting"],
+                    ["past", "Past"],
+                  ] as const).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setActivityPredicate(value)}
+                      className={activityPredicate === value ? "chip-active" : "chip-default"}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                {activitiesQuery.isLoading ? (
+                  <p className="text-muted-foreground">Loading activities...</p>
+                ) : profileActivities.length ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {profileActivities.map((activity, index) => (
+                      <ActivityCard
+                        key={activity.id}
+                        activity={activity}
+                        index={index}
+                        currentUserId={user?.id}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">No activities found for this view.</p>
+                )}
               </motion.div>
             )}
 

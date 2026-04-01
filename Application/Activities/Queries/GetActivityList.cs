@@ -42,7 +42,7 @@ public class GetActivityList
             var activities = await query
                 .Take(request.PageSize + 1)
                 .ProjectTo<ActivityDto>(mapper.ConfigurationProvider,
-                    new { currentUserId = userAccessor.GetUserId()})
+                    new { currentUserId = userAccessor.GetUserIdOrNull()})
                 .ToListAsync(cancellationToken);
 
             DateTime? nextCursor = null;

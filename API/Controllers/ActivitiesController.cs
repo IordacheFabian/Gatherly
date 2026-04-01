@@ -12,12 +12,14 @@ namespace API.Controllers;
 
 public class ActivitiesController : BaseApiController
 {
+    [AllowAnonymous]
     [HttpGet]
     public async Task<ActionResult<PageList<ActivityDto, DateTime?>>> GetActivities(DateTime? cursor)
     {
         return HandleResult(await Mediator.Send(new GetActivityList.Query { Cursor = cursor }));
     }
 
+    [AllowAnonymous]
     [HttpGet("{id}")]
     public async Task<ActionResult<ActivityDto>> GetActivityDetail(string id)
     {
@@ -49,5 +51,16 @@ public class ActivitiesController : BaseApiController
     public async Task<ActionResult> Attend(string id)
     {
         return HandleResult(await Mediator.Send(new UpdateAttendance.Command { Id = id }));
+    }
+
+    [HttpPost("{id}/photo")]
+    [Authorize(Policy = "IsActivityHost")]
+    public async Task<ActionResult> UploadPhoto(string id, IFormFile file)
+    {
+        return HandleResult(await Mediator.Send(new UploadActivityPhoto.Command
+        {
+            ActivityId = id,
+            File = file
+        }));
     }
 }
