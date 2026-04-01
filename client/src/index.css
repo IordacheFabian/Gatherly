@@ -1,0 +1,169 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 225 25% 6%;
+    --foreground: 210 40% 96%;
+
+    --card: 225 20% 10%;
+    --card-foreground: 210 40% 96%;
+
+    --popover: 225 20% 10%;
+    --popover-foreground: 210 40% 96%;
+
+    --primary: 210 100% 56%;
+    --primary-foreground: 225 25% 6%;
+
+    --secondary: 270 70% 55%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 225 15% 15%;
+    --muted-foreground: 215 20% 55%;
+
+    --accent: 16 85% 60%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 225 15% 18%;
+    --input: 225 15% 18%;
+    --ring: 210 100% 56%;
+
+    --radius: 0.75rem;
+
+    --cyan: 185 90% 50%;
+    --violet: 270 70% 55%;
+    --coral: 16 85% 60%;
+    --neon-green: 150 80% 50%;
+
+    --glass-bg: 225 20% 10%;
+    --glass-border: 225 15% 22%;
+
+    --sidebar-background: 225 20% 8%;
+    --sidebar-foreground: 210 40% 96%;
+    --sidebar-primary: 210 100% 56%;
+    --sidebar-primary-foreground: 225 25% 6%;
+    --sidebar-accent: 225 15% 15%;
+    --sidebar-accent-foreground: 210 40% 96%;
+    --sidebar-border: 225 15% 18%;
+    --sidebar-ring: 210 100% 56%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-card/60 backdrop-blur-xl border border-glass-border rounded-xl;
+  }
+
+  .glass-strong {
+    @apply bg-card/80 backdrop-blur-2xl border border-glass-border rounded-xl;
+  }
+
+  .gradient-primary {
+    @apply bg-gradient-to-r from-primary via-cyan to-violet;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary via-cyan to-violet bg-clip-text text-transparent;
+  }
+
+  .gradient-accent {
+    @apply bg-gradient-to-r from-violet via-primary to-cyan;
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 20px hsl(210 100% 56% / 0.3), 0 0 60px hsl(210 100% 56% / 0.1);
+  }
+
+  .glow-violet {
+    box-shadow: 0 0 20px hsl(270 70% 55% / 0.3), 0 0 60px hsl(270 70% 55% / 0.1);
+  }
+
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl;
+  }
+
+  .card-glow {
+    @apply relative overflow-hidden;
+  }
+
+  .card-glow::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-500 rounded-xl;
+    background: linear-gradient(135deg, hsl(210 100% 56% / 0.1), hsl(270 70% 55% / 0.1));
+  }
+
+  .card-glow:hover::before {
+    @apply opacity-100;
+  }
+
+  .animated-border {
+    @apply relative;
+    background: linear-gradient(hsl(225 20% 10%), hsl(225 20% 10%)) padding-box,
+                linear-gradient(135deg, hsl(210 100% 56%), hsl(270 70% 55%), hsl(185 90% 50%)) border-box;
+    border: 1px solid transparent;
+  }
+
+  .btn-glow {
+    @apply relative overflow-hidden;
+  }
+
+  .btn-glow::after {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: radial-gradient(circle at center, hsl(210 100% 56% / 0.4), transparent 70%);
+  }
+
+  .btn-glow:hover::after {
+    @apply opacity-100;
+  }
+
+  .skeleton-glow {
+    @apply animate-pulse rounded-lg;
+    background: linear-gradient(90deg, hsl(225 15% 15%), hsl(225 15% 20%), hsl(225 15% 15%));
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .chip {
+    @apply px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer border;
+  }
+
+  .chip-default {
+    @apply chip bg-muted/50 border-glass-border text-muted-foreground hover:bg-muted hover:text-foreground;
+  }
+
+  .chip-active {
+    @apply chip bg-primary/20 border-primary/50 text-primary;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
