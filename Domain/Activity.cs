@@ -12,6 +12,9 @@ public class Activity
     public required string Description { get; set; }
     public required string Category { get; set; }
     public bool IsCancelled { get; set; }
+    public int MaxParticipants { get; set; } = 20;
+    public DateTime? BookingDeadline { get; set; }
+    public bool RequiresHostConfirmation { get; set; } = true;
     public string? ImageUrl { get; set; }
     public string? ImagePublicId { get; set; }
 

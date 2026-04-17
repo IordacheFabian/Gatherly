@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar, MapPin, Type, AlignLeft, Tag, ArrowLeft, ImagePlus } from "lucide-react";
+import { Calendar, MapPin, Type, AlignLeft, Tag, ArrowLeft, ImagePlus, Users, CheckCircle } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,9 @@ const CreateActivity = () => {
     venue: "",
     latitude: "0",
     longitude: "0",
+    maxParticipants: "20",
+    bookingDeadline: "",
+    requiresHostConfirmation: "true",
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -63,6 +66,9 @@ const CreateActivity = () => {
       venue: editQuery.data.venue,
       latitude: String(editQuery.data.latitude),
       longitude: String(editQuery.data.longitude),
+      maxParticipants: String(editQuery.data.maxParticipants),
+      bookingDeadline: editQuery.data.bookingDeadline ? editQuery.data.bookingDeadline.slice(0, 16) : editQuery.data.date.slice(0, 16),
+      requiresHostConfirmation: String(editQuery.data.requiresHostConfirmation),
     });
     setHasResolvedCoordinates(true);
     setImagePreview(editQuery.data.imageUrl ?? null);
@@ -84,6 +90,13 @@ const CreateActivity = () => {
       setHasResolvedCoordinates(false);
       setFormData((prev) => ({ ...prev, latitude: "0", longitude: "0" }));
       setShowLocationSuggestions(true);
+    }
+
+    if (field === "date") {
+      setFormData((prev) => ({
+        ...prev,
+        bookingDeadline: prev.bookingDeadline || value,
+      }));
     }
 
     setFieldErrors((prev) => {
@@ -206,9 +219,22 @@ const CreateActivity = () => {
     if (!formData.city.trim()) nextErrors.city = "City is required";
     if (!formData.venue.trim()) nextErrors.venue = "Venue is required";
     if (!formData.date) nextErrors.date = "Date and time are required";
+    if (!formData.bookingDeadline) nextErrors.bookingDeadline = "Booking deadline is required";
+    if (!formData.maxParticipants || Number(formData.maxParticipants) < 1) {
+      nextErrors.maxParticipants = "Max participants must be at least 1";
+    }
 
     if (formData.date && new Date(formData.date).getTime() < Date.now() && !editId) {
       nextErrors.date = "Choose a future date and time";
+    }
+
+    if (formData.bookingDeadline && formData.date) {
+      if (new Date(formData.bookingDeadline).getTime() > new Date(formData.date).getTime()) {
+        nextErrors.bookingDeadline = "Booking deadline must be before activity date";
+      }
+      if (new Date(formData.bookingDeadline).getTime() < Date.now() && !editId) {
+        nextErrors.bookingDeadline = "Booking deadline must be in the future";
+      }
     }
 
     if (!hasResolvedCoordinates) nextErrors.venue = "Choose a suggested location to set coordinates";
@@ -224,6 +250,9 @@ const CreateActivity = () => {
     { icon: AlignLeft, label: "Description", field: "description", placeholder: "Describe what participants can expect...", type: "textarea" },
     { icon: Tag, label: "Category", field: "category", placeholder: "", type: "select" },
     { icon: Calendar, label: "Date & Time", field: "date", placeholder: "", type: "datetime-local" },
+    { icon: Calendar, label: "Booking Deadline", field: "bookingDeadline", placeholder: "", type: "datetime-local" },
+    { icon: Users, label: "Max Participants", field: "maxParticipants", placeholder: "20", type: "number" },
+    { icon: CheckCircle, label: "Host Confirmation", field: "requiresHostConfirmation", placeholder: "", type: "booking-confirmation" },
     { icon: MapPin, label: "City", field: "city", placeholder: "City", type: "text" },
     { icon: MapPin, label: "Venue", field: "venue", placeholder: "Start typing an address", type: "address-autocomplete" },
   ];
@@ -239,6 +268,9 @@ const CreateActivity = () => {
         venue: formData.venue,
         latitude: Number(formData.latitude),
         longitude: Number(formData.longitude),
+        maxParticipants: Number(formData.maxParticipants),
+        bookingDeadline: formData.bookingDeadline ? new Date(formData.bookingDeadline).toISOString() : null,
+        requiresHostConfirmation: formData.requiresHostConfirmation === "true",
       };
 
       if (editId) {
@@ -322,6 +354,15 @@ const CreateActivity = () => {
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
+              ) : type === "booking-confirmation" ? (
+                <select
+                  value={formData.requiresHostConfirmation}
+                  onChange={(e) => handleChange("requiresHostConfirmation", e.target.value)}
+                  className="w-full bg-muted/30 border border-glass-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:ring-1 focus:ring-primary/50"
+                >
+                  <option value="true">Required (host approves/rejects)</option>
+                  <option value="false">Not required (auto-approve if slot available)</option>
+                </select>
               ) : type === "address-autocomplete" ? (
                 <div className="relative">
                   <Input
@@ -362,7 +403,7 @@ const CreateActivity = () => {
               ) : (
                 <Input
                   type={type}
-                  min={field === "date" ? minDateTime : undefined}
+                  min={field === "date" || field === "bookingDeadline" ? minDateTime : field === "maxParticipants" ? "1" : undefined}
                   value={formData[field as keyof typeof formData]}
                   onChange={(e) => handleChange(field, e.target.value)}
                   placeholder={placeholder}

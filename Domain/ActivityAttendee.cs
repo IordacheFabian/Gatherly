@@ -9,5 +9,7 @@ public class ActivityAttendee
     public string? ActivityId { get; set; }
     public Activity Activity { get; set; } = null!;
     public bool IsHost { get; set; }
+    public BookingStatus Status { get; set; } = BookingStatus.Approved;
+    public DateTime? StatusUpdatedAt { get; set; }
     public DateTime DateJoined { get; set; } = DateTime.UtcNow;
 }

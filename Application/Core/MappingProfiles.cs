@@ -24,7 +24,25 @@ public class MappingProfiles : Profile
             .ForMember(d => d.HostDisplayName, o => o.MapFrom(s =>
                 s.Attendees.FirstOrDefault(a => a.IsHost)!.User.DisplayName))
             .ForMember(d => d.HostId, o => o.MapFrom(s =>
-                s.Attendees.FirstOrDefault(a => a.IsHost)!.UserId));
+                s.Attendees.FirstOrDefault(a => a.IsHost)!.UserId))
+            .ForMember(d => d.ApprovedParticipantsCount, o => o.MapFrom(s =>
+                s.Attendees.Count(a => !a.IsHost && a.Status == BookingStatus.Approved)))
+            .ForMember(d => d.PendingBookingsCount, o => o.MapFrom(s =>
+                s.Attendees.Count(a => !a.IsHost && a.Status == BookingStatus.Pending)))
+            .ForMember(d => d.WaitlistCount, o => o.MapFrom(s =>
+                s.Attendees.Count(a => !a.IsHost && a.Status == BookingStatus.Waitlisted)))
+            .ForMember(d => d.CurrentUserBookingStatus, o => o.MapFrom(s =>
+                s.Attendees
+                    .Where(a => a.UserId == currentUserId)
+                    .Select(a => (BookingStatus?)a.Status)
+                    .FirstOrDefault()))
+            .ForMember(d => d.Bookings, o => o.MapFrom(s =>
+                s.Attendees.Where(a => !a.IsHost)))
+            .ForMember(d => d.Attendees, o => o.MapFrom(s =>
+                s.Attendees.Where(a => a.IsHost || a.Status == BookingStatus.Approved)));
+
+        CreateMap<ActivityAttendee, ActivityBookingDto>()
+            .ForMember(d => d.User, o => o.MapFrom(s => s));
 
         CreateMap<ActivityAttendee, UserProfile>()
             .ForMember(d => d.DisplayName, o => o.MapFrom(s => s.User.DisplayName))

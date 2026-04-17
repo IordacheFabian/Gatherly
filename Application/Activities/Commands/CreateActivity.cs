@@ -33,6 +33,8 @@ public class CreateActivity
                 ActivityId = activity.Id,
                 UserId = user.Id,
                 IsHost = true,
+                Status = BookingStatus.Approved,
+                StatusUpdatedAt = DateTime.UtcNow,
             };
 
             activity.Attendees.Add(attendee);

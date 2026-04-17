@@ -9,10 +9,13 @@ import ActivityCard from "@/components/ActivityCard";
 import PageTransition from "@/components/PageTransition";
 import { activitiesApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { categoryOptions } from "@/lib/activity-view";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
+  const [cityFilter, setCityFilter] = useState("All");
+  const [dateFilter, setDateFilter] = useState("");
   const [sortBy, setSortBy] = useState("date");
   const { user } = useAuth();
 
@@ -28,6 +31,20 @@ const Index = () => {
     [activitiesQuery.data],
   );
 
+  const categories = useMemo(() => {
+    const fromActivities = Array.from(
+      new Set(activities.map((a) => a.category.trim()).filter(Boolean)),
+    );
+
+    const merged = new Set<string>(["All", ...fromActivities, ...categoryOptions.filter((c) => c !== "All")]);
+    return Array.from(merged);
+  }, [activities]);
+
+  const availableCities = useMemo(
+    () => Array.from(new Set(activities.map((a) => a.city.trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    [activities],
+  );
+
   const filtered = useMemo(() => {
     const normalizedCategory = activeCategory.toLowerCase();
 
@@ -39,7 +56,10 @@ const Index = () => {
         a.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCat =
         activeCategory === "All" || a.category.toLowerCase() === normalizedCategory;
-      return matchesSearch && matchesCat;
+      const matchesCity = cityFilter === "All" || a.city.toLowerCase() === cityFilter.toLowerCase();
+      const matchesDate = !dateFilter || a.date.slice(0, 10) === dateFilter;
+
+      return matchesSearch && matchesCat && matchesCity && matchesDate;
     });
 
     result.sort((a, b) => {
@@ -49,7 +69,7 @@ const Index = () => {
     });
 
     return result;
-  }, [activities, searchQuery, activeCategory, sortBy]);
+  }, [activities, searchQuery, activeCategory, cityFilter, dateFilter, sortBy]);
 
   return (
     <PageTransition>
@@ -57,10 +77,23 @@ const Index = () => {
 
       <section className="container mx-auto px-6 pb-20">
         <FilterBar
+          categories={categories}
           activeCategory={activeCategory}
           onCategoryChange={setActiveCategory}
+          cityFilter={cityFilter}
+          onCityFilterChange={setCityFilter}
+          availableCities={availableCities}
+          dateFilter={dateFilter}
+          onDateFilterChange={setDateFilter}
           sortBy={sortBy}
           onSortChange={setSortBy}
+          onClearFilters={() => {
+            setActiveCategory("All");
+            setCityFilter("All");
+            setDateFilter("");
+            setSearchQuery("");
+            setSortBy("date");
+          }}
         />
 
         {activitiesQuery.isLoading && (
@@ -84,18 +117,6 @@ const Index = () => {
               ))}
             </div>
 
-            {activitiesQuery.hasNextPage && (
-              <div className="flex justify-center mt-8">
-                <button
-                  type="button"
-                  className="chip-active"
-                  onClick={() => void activitiesQuery.fetchNextPage()}
-                  disabled={activitiesQuery.isFetchingNextPage}
-                >
-                  {activitiesQuery.isFetchingNextPage ? "Loading..." : "Load more"}
-                </button>
-              </div>
-            )}
           </>
         ) : (
           <motion.div
@@ -109,6 +130,19 @@ const Index = () => {
             <h3 className="font-display font-semibold text-lg mb-2">No activities found</h3>
             <p className="text-sm text-muted-foreground mb-6">Try adjusting your filters or search query</p>
           </motion.div>
+        )}
+
+        {activitiesQuery.hasNextPage && (
+          <div className="flex justify-center mt-8">
+            <button
+              type="button"
+              className="chip-active"
+              onClick={() => void activitiesQuery.fetchNextPage()}
+              disabled={activitiesQuery.isFetchingNextPage}
+            >
+              {activitiesQuery.isFetchingNextPage ? "Loading..." : "Load more"}
+            </button>
+          </div>
         )}
 
         {/* FAB */}

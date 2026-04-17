@@ -67,6 +67,22 @@ const ActivityDetails = () => {
     },
   });
 
+  const approveMutation = useMutation({
+    mutationFn: (userId: string) => activitiesApi.approveBooking(id!, userId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["activity", id] });
+      await queryClient.invalidateQueries({ queryKey: ["activities"] });
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: (userId: string) => activitiesApi.rejectBooking(id!, userId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["activity", id] });
+      await queryClient.invalidateQueries({ queryKey: ["activities"] });
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: () => activitiesApi.remove(id!),
     onSuccess: async () => {
@@ -122,6 +138,17 @@ const ActivityDetails = () => {
   const host = isUserHost(activity, user?.id);
   const joined = isUserAttending(activity, user?.id);
   const mapQuery = encodeURIComponent(`${activity.venue}, ${activity.city}`);
+  const currentStatus = activity.currentUserBookingStatus;
+  const pendingBookings = activity.bookings.filter((b) => !b.isHost && (b.status === "Pending" || b.status === "Waitlisted"));
+
+  const bookingActionLabel = (() => {
+    if (!currentStatus) return "Request booking";
+    if (currentStatus === "Pending" || currentStatus === "Waitlisted" || currentStatus === "Approved") {
+      return "Cancel booking";
+    }
+
+    return "Request booking again";
+  })();
 
   return (
     <PageTransition>
@@ -208,8 +235,17 @@ const ActivityDetails = () => {
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Users className="w-4 h-4 text-cyan" />
-                    <span>{activity.attendees.length} joined</span>
+                    <span>{activity.approvedParticipantsCount}/{activity.maxParticipants} approved</span>
                   </div>
+                </div>
+
+                <div className="mb-6 rounded-lg border border-glass-border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
+                  <p>Pending: {activity.pendingBookingsCount} | Waiting list: {activity.waitlistCount}</p>
+                  {activity.bookingDeadline && (
+                    <p>
+                      Booking deadline: {new Date(activity.bookingDeadline).toLocaleString()}
+                    </p>
+                  )}
                 </div>
 
                 <p className="text-muted-foreground leading-relaxed">{activity.description}</p>
@@ -317,6 +353,46 @@ const ActivityDetails = () => {
                   ))}
                 </div>
               </motion.div>
+
+              {host && pendingBookings.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.22 }}
+                  className="glass p-6 rounded-xl"
+                >
+                  <h2 className="font-display font-semibold text-lg mb-4">Booking requests</h2>
+                  <div className="space-y-3">
+                    {pendingBookings.map((booking) => (
+                      <div key={booking.user.id} className="rounded-lg border border-glass-border bg-muted/20 p-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="font-medium">{booking.user.displayName}</p>
+                            <p className="text-xs text-muted-foreground">Status: {booking.status}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => approveMutation.mutate(booking.user.id)}
+                              disabled={approveMutation.isPending || rejectMutation.isPending}
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => rejectMutation.mutate(booking.user.id)}
+                              disabled={approveMutation.isPending || rejectMutation.isPending}
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
             </div>
 
             <div className="space-y-6">
@@ -364,12 +440,18 @@ const ActivityDetails = () => {
                     onClick={() => attendMutation.mutate()}
                     disabled={attendMutation.isPending}
                   >
-                    {joined ? "Leave activity" : "Join activity"}
+                    {bookingActionLabel}
                   </Button>
                 ) : (
                   <Link to="/auth" className="block">
                     <Button className="w-full">Log in to join</Button>
                   </Link>
+                )}
+
+                {!!currentStatus && !host && (
+                  <p className="text-xs text-muted-foreground mt-3">
+                    Your booking status: {currentStatus}
+                  </p>
                 )}
               </motion.div>
 

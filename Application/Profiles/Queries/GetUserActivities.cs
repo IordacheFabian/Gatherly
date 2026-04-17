@@ -4,6 +4,7 @@ using Application.Interfaces;
 using Application.Interfaces.IRepository;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Domain;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,8 +30,14 @@ public class GetUserActivities
             query = request.Predicate switch
             {
                 "hosting" => query.Where(x => x.Attendees.Any(a => a.UserId == request.UserId && a.IsHost)),
-                "past" => query.Where(x => x.Attendees.Any(a => a.UserId == request.UserId) && x.Date < DateTime.UtcNow),
-                _ => query.Where(x => x.Attendees.Any(a => a.UserId == request.UserId) && x.Date >= DateTime.UtcNow),
+                "past" => query.Where(x => x.Attendees.Any(a =>
+                    a.UserId == request.UserId &&
+                    (a.IsHost || (a.Status != BookingStatus.Rejected && a.Status != BookingStatus.Cancelled))) &&
+                    x.Date < DateTime.UtcNow),
+                _ => query.Where(x => x.Attendees.Any(a =>
+                    a.UserId == request.UserId &&
+                    (a.IsHost || (a.Status != BookingStatus.Rejected && a.Status != BookingStatus.Cancelled))) &&
+                    x.Date >= DateTime.UtcNow),
             };
 
             var activities = await query

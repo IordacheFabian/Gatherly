@@ -13,6 +13,16 @@ export interface UserProfile {
   followingCount: number;
 }
 
+export type BookingStatus = "Approved" | "Pending" | "Waitlisted" | "Rejected" | "Cancelled";
+
+export interface ActivityBooking {
+  user: UserProfile;
+  isHost: boolean;
+  status: BookingStatus;
+  dateJoined: string;
+  statusUpdatedAt?: string | null;
+}
+
 export interface Activity {
   id: string;
   title: string;
@@ -20,6 +30,9 @@ export interface Activity {
   category: string;
   date: string;
   isCancelled: boolean;
+  maxParticipants: number;
+  bookingDeadline?: string | null;
+  requiresHostConfirmation: boolean;
   imageUrl?: string | null;
   hostDisplayName: string;
   hostId: string;
@@ -27,7 +40,12 @@ export interface Activity {
   venue: string;
   latitude: number;
   longitude: number;
+  approvedParticipantsCount: number;
+  pendingBookingsCount: number;
+  waitlistCount: number;
+  currentUserBookingStatus?: BookingStatus | null;
   attendees: UserProfile[];
+  bookings: ActivityBooking[];
 }
 
 export interface BaseActivityForm {
@@ -39,6 +57,9 @@ export interface BaseActivityForm {
   venue: string;
   latitude: number;
   longitude: number;
+  maxParticipants: number;
+  bookingDeadline?: string | null;
+  requiresHostConfirmation: boolean;
 }
 
 export interface Comment {

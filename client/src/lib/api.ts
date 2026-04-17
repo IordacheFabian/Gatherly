@@ -115,6 +115,14 @@ export const activitiesApi = {
     request<void>(`/api/activities/${id}/attend`, {
       method: "POST",
     }),
+  approveBooking: (activityId: string, userId: string) =>
+    request<void>(`/api/activities/${activityId}/bookings/${userId}/approve`, {
+      method: "POST",
+    }),
+  rejectBooking: (activityId: string, userId: string) =>
+    request<void>(`/api/activities/${activityId}/bookings/${userId}/reject`, {
+      method: "POST",
+    }),
   uploadPhoto: async (id: string, file: File) => {
     const formData = new FormData();
     formData.append("file", file);

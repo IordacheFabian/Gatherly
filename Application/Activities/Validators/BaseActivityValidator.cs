@@ -28,5 +28,15 @@ public class BaseActivityValidator<T, TDto>
         RuleFor(x => selector(x).Longitude)
             .NotEmpty().WithMessage("Logitude is required.")
             .InclusiveBetween(-180, 180).WithMessage("Longitude must be between -180 and 180.");
+
+        RuleFor(x => selector(x).MaxParticipants)
+            .GreaterThan(0).WithMessage("Max participants must be greater than 0.")
+            .LessThanOrEqualTo(1000).WithMessage("Max participants cannot exceed 1000.");
+
+        RuleFor(x => selector(x).BookingDeadline)
+            .NotNull().WithMessage("Booking deadline is required.")
+            .GreaterThan(DateTime.UtcNow).WithMessage("Booking deadline must be in the future.")
+            .LessThanOrEqualTo(x => selector(x).Date)
+            .WithMessage("Booking deadline cannot be after activity date.");
     }
 }

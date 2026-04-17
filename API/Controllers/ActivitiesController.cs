@@ -53,6 +53,30 @@ public class ActivitiesController : BaseApiController
         return HandleResult(await Mediator.Send(new UpdateAttendance.Command { Id = id }));
     }
 
+    [HttpPost("{id}/bookings/{userId}/approve")]
+    [Authorize(Policy = "IsActivityHost")]
+    public async Task<ActionResult> ApproveBooking(string id, string userId)
+    {
+        return HandleResult(await Mediator.Send(new ReviewBooking.Command
+        {
+            ActivityId = id,
+            UserId = userId,
+            TargetStatus = BookingStatus.Approved,
+        }));
+    }
+
+    [HttpPost("{id}/bookings/{userId}/reject")]
+    [Authorize(Policy = "IsActivityHost")]
+    public async Task<ActionResult> RejectBooking(string id, string userId)
+    {
+        return HandleResult(await Mediator.Send(new ReviewBooking.Command
+        {
+            ActivityId = id,
+            UserId = userId,
+            TargetStatus = BookingStatus.Rejected,
+        }));
+    }
+
     [HttpPost("{id}/photo")]
     [Authorize(Policy = "IsActivityHost")]
     public async Task<ActionResult> UploadPhoto(string id, IFormFile file)
