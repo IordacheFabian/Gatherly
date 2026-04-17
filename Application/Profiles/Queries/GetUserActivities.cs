@@ -1,11 +1,11 @@
 using API.DTOs;
 using Application.Core;
 using Application.Interfaces;
+using Application.Interfaces.IRepository;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Persistence;
 
 namespace Application.Profiles.Queries;
 
@@ -17,12 +17,12 @@ public class GetUserActivities
         public string Predicate { get; set; } = "future";
     }
 
-    public class Handler(AppDbContext context, IMapper mapper, IUserAccessor userAccessor)
+    public class Handler(IActivityRepository activityRepository, IMapper mapper, IUserAccessor userAccessor)
         : IRequestHandler<Query, Result<List<ActivityDto>>>
     {
         public async Task<Result<List<ActivityDto>>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var query = context.Activities
+            var query = activityRepository.Query()
                 .OrderBy(x => x.Date)
                 .AsQueryable();
 

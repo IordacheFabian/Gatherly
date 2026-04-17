@@ -2,11 +2,11 @@ using System;
 using Application.Activities.DTOs;
 using Application.Core;
 using Application.Interfaces;
+using Application.Interfaces.IRepository;
 using AutoMapper;
 using Domain;
 using FluentValidation;
 using MediatR;
-using Persistence;
 
 namespace Application.Activities.Commands;
 
@@ -17,7 +17,7 @@ public class CreateActivity
         public required CreateActivityDto ActivityDto { get; set; }
     }
 
-    public class Handler(AppDbContext context, IMapper mapper, IUserAccessor userAccessor)
+    public class Handler(IActivityRepository activityRepository, IMapper mapper, IUserAccessor userAccessor)
             : IRequestHandler<Command, Result<string>>
     {
         public async Task<Result<string>> Handle(Command request, CancellationToken cancellationToken)
@@ -26,7 +26,7 @@ public class CreateActivity
 
             var activity = mapper.Map<Activity>(request.ActivityDto);
 
-            context.Activities.Add(activity);
+            await activityRepository.AddAsync(activity, cancellationToken);
 
             var attendee = new ActivityAttendee
             {
@@ -37,7 +37,7 @@ public class CreateActivity
 
             activity.Attendees.Add(attendee);
 
-            var result = await context.SaveChangesAsync(cancellationToken) > 0;
+            var result = await activityRepository.SaveChangesAsync(cancellationToken) > 0;
 
             if (!result) return Result<string>.Failure("Failed to create activity", 400);
 

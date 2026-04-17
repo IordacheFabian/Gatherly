@@ -88,6 +88,16 @@ const ActivityDetails = () => {
     }
   };
 
+  const handleCommentKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Enter") return;
+
+    e.preventDefault();
+
+    if (!sendingComment && commentBody.trim()) {
+      void sendComment();
+    }
+  };
+
   if (activityQuery.isLoading) {
     return (
       <PageTransition>
@@ -252,6 +262,7 @@ const ActivityDetails = () => {
                     <input
                       value={commentBody}
                       onChange={(e) => setCommentBody(e.target.value)}
+                      onKeyDown={handleCommentKeyDown}
                       placeholder="Add a comment..."
                       className="flex-1 bg-muted/30 border border-glass-border rounded-lg px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary/50"
                     />

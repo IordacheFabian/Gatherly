@@ -1,18 +1,22 @@
 using System;
 using System.Security.Claims;
 using Application.Interfaces;
+using Application.Interfaces.IRepository;
 using Domain;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Persistence;
 
 namespace Infrastructure.Security;
 
-public class UserAccessor(IHttpContextAccessor httpContextAccessor, AppDbContext dbContext) : IUserAccessor
+public class UserAccessor(
+    IHttpContextAccessor httpContextAccessor,
+    UserManager<User> userManager,
+    IProfileRepository profileRepository) : IUserAccessor
 {
     public async Task<User> GetUserAsync()
     {
-        return await dbContext.Users.FindAsync(GetUserId())
+        return await userManager.Users.FirstOrDefaultAsync(x => x.Id == GetUserId())
             ?? throw new UnauthorizedAccessException("No user is logged in");
     }
 
@@ -31,7 +35,7 @@ public class UserAccessor(IHttpContextAccessor httpContextAccessor, AppDbContext
     {
         var userId = GetUserId();
 
-        return await dbContext.Users
+        return await profileRepository.QueryUsers()
             .Include(x => x.Photos)
             .FirstOrDefaultAsync(x => x.Id == userId)
                 ?? throw new UnauthorizedAccessException("No user is logged in");

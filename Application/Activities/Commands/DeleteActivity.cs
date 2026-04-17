@@ -1,8 +1,8 @@
 using System;
 using Application.Core;
 using Application.Interfaces;
+using Application.Interfaces.IRepository;
 using MediatR;
-using Persistence;
 
 namespace Application.Activities.Commands;
 
@@ -13,12 +13,11 @@ public class DeleteActivity
         public required string Id { get; set; }
     }
 
-    public class Handler(AppDbContext context, IPhotoService photoService) : IRequestHandler<Command, Result<Unit>>
+    public class Handler(IActivityRepository activityRepository, IPhotoService photoService) : IRequestHandler<Command, Result<Unit>>
     {
         public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
         {
-            var activity = await context.Activities
-                .FindAsync([request.Id], cancellationToken);
+            var activity = await activityRepository.GetByIdAsync(request.Id, cancellationToken);
 
             if (activity == null) return Result<Unit>.Failure("Activity not found", 404);
 
@@ -28,9 +27,9 @@ public class DeleteActivity
             }
 
 
-            context.Remove(activity);
+            activityRepository.Remove(activity);
 
-            var result = await context.SaveChangesAsync(cancellationToken) > 0;
+            var result = await activityRepository.SaveChangesAsync(cancellationToken) > 0;
 
             if (!result) return Result<Unit>.Failure("Failed to delete the activity", 400);
 

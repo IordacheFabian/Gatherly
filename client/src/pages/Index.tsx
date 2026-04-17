@@ -31,7 +31,7 @@ const Index = () => {
   const filtered = useMemo(() => {
     const normalizedCategory = activeCategory.toLowerCase();
 
-    let result = activities.filter((a) => {
+    const result = activities.filter((a) => {
       const matchesSearch =
         a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         a.city.toLowerCase().includes(searchQuery.toLowerCase()) ||

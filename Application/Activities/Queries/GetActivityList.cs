@@ -2,11 +2,11 @@ using System;
 using API.DTOs;
 using Application.Core;
 using Application.Interfaces;
+using Application.Interfaces.IRepository;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Persistence;
 
 namespace Application.Activities.Queries;
 
@@ -25,12 +25,12 @@ public class GetActivityList
         }
     }
 
-    public class Handler(AppDbContext context, IMapper mapper, IUserAccessor userAccessor) : 
+    public class Handler(IActivityRepository activityRepository, IMapper mapper, IUserAccessor userAccessor) : 
         IRequestHandler<Query, Result<PageList<ActivityDto, DateTime?>>>
     {
         public async Task<Result<PageList<ActivityDto, DateTime?>>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var query = context.Activities
+            var query = activityRepository.Query()
                 .OrderBy(x => x.Date)
                 .AsQueryable();
             

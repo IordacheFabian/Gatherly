@@ -1,8 +1,8 @@
 using System;
 using Application.Core;
 using Application.Interfaces;
+using Application.Interfaces.IRepository;
 using MediatR;
-using Persistence;
 
 namespace Application.Profiles.Commands;
 
@@ -13,7 +13,7 @@ public class SetMainPhoto
         public required string PhotoId { get; set; }
     }
 
-    public class Handler(AppDbContext context, IUserAccessor userAccessor)
+    public class Handler(IProfileRepository profileRepository, IUserAccessor userAccessor)
         : IRequestHandler<Command, Result<Unit>>
     {
         public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
@@ -26,7 +26,7 @@ public class SetMainPhoto
 
             user.ImageUrl = photo.Url;
 
-            var result = await context.SaveChangesAsync(cancellationToken) > 0;
+            var result = await profileRepository.SaveChangesAsync(cancellationToken) > 0;
 
             return result
                 ? Result<Unit>.Success(Unit.Value)

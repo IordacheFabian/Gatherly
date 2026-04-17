@@ -1,6 +1,10 @@
 import { motion } from "framer-motion";
 import { Compass, Users, Zap, Globe, Heart, Shield } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
+import { activitiesApi } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
+import type { Activity } from "@/lib/types";
+
 
 const highlights = [
   { icon: Compass, title: "Discover", desc: "Find activities that match your interests and lifestyle in your area." },
@@ -11,9 +15,71 @@ const highlights = [
   { icon: Shield, title: "Trust", desc: "Verified organizers, reviews, and a safe platform to ensure great experiences." },
 ];
 
-const About = () => (
-  <PageTransition>
-    <div className="pt-24 pb-20 container mx-auto px-6">
+function formatCompact(value: number) {
+  return new Intl.NumberFormat("en", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
+async function getAllActivities(maxPages = 30) {
+  const activities: Activity[] = [];
+  let cursor: string | null | undefined = null;
+
+  for (let i = 0; i < maxPages; i++) {
+    const page = await activitiesApi.list(cursor);
+    activities.push(...page.items);
+
+    if (!page.nextCursor) break;
+    cursor = page.nextCursor;
+  }
+
+  return activities;
+}
+
+const About = () => {
+  const statsQuery = useQuery({
+    queryKey: ["about-stats"],
+    queryFn: () => getAllActivities(),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const activities = statsQuery.data ?? [];
+  const uniqueCities = new Set(activities.map((a) => a.city.trim().toLowerCase())).size;
+
+  const uniqueUsers = new Set<string>();
+  for (const activity of activities) {
+    uniqueUsers.add(activity.hostId);
+    for (const attendee of activity.attendees) uniqueUsers.add(attendee.id);
+  }
+
+  const totalAttendees = activities.reduce((sum, a) => sum + a.attendees.length, 0);
+  const avgAttendance = activities.length
+    ? (totalAttendees / activities.length).toFixed(1)
+    : "0.0";
+
+  const stats = [
+    {
+      value: statsQuery.isLoading ? "..." : formatCompact(uniqueUsers.size),
+      label: "Active Users",
+    },
+    {
+      value: statsQuery.isLoading ? "..." : formatCompact(activities.length),
+      label: "Activities Created",
+    },
+    {
+      value: statsQuery.isLoading ? "..." : formatCompact(uniqueCities),
+      label: "Cities",
+    },
+    {
+      value: statsQuery.isLoading ? "..." : avgAttendance,
+      label: "Avg Attendees",
+    },
+  ];
+
+  return (
+    <PageTransition>
+      <div className="pt-24 pb-20 container mx-auto px-6">
       {/* Hero */}
       <div className="text-center max-w-3xl mx-auto mb-20">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -66,29 +132,30 @@ const About = () => (
       </div>
 
       {/* Stats */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="glass p-8 rounded-2xl"
-      >
-        <h2 className="text-2xl font-display font-bold text-center mb-8">Growing Community</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {[
-            { value: "10K+", label: "Active Users" },
-            { value: "2,500+", label: "Activities Created" },
-            { value: "50+", label: "Cities" },
-            { value: "98%", label: "Satisfaction" },
-          ].map((s) => (
-            <div key={s.label} className="text-center">
-              <p className="text-3xl font-display font-bold gradient-text">{s.value}</p>
-              <p className="text-sm text-muted-foreground mt-1">{s.label}</p>
-            </div>
-          ))}
-        </div>
-      </motion.div>
-    </div>
-  </PageTransition>
-);
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="glass p-8 rounded-2xl"
+        >
+          <h2 className="text-2xl font-display font-bold text-center mb-8">Growing Community</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {stats.map((s) => (
+              <div key={s.label} className="text-center">
+                <p className="text-3xl font-display font-bold gradient-text">{s.value}</p>
+                <p className="text-sm text-muted-foreground mt-1">{s.label}</p>
+              </div>
+            ))}
+          </div>
+          {statsQuery.isError ? (
+            <p className="text-center text-sm text-muted-foreground mt-6">
+              Stats are temporarily unavailable.
+            </p>
+          ) : null}
+        </motion.div>
+      </div>
+    </PageTransition>
+  );
+};
 
 export default About;

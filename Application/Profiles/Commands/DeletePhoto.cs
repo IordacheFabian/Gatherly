@@ -1,8 +1,8 @@
 using System;
 using Application.Core;
 using Application.Interfaces;
+using Application.Interfaces.IRepository;
 using MediatR;
-using Persistence;
 
 namespace Application.Profiles.Commands;
 
@@ -13,7 +13,7 @@ public class DeletePhoto
         public required string PhotoId { get; set; }
     }
 
-    public class Handler(AppDbContext context, IUserAccessor userAccessor, IPhotoService photoService)
+    public class Handler(IProfileRepository profileRepository, IUserAccessor userAccessor, IPhotoService photoService)
         : IRequestHandler<Command, Result<Unit>>
     {
         public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
@@ -29,8 +29,9 @@ public class DeletePhoto
             await photoService.DeletePhoto(photo.PublicId);
 
             user.Photos.Remove(photo);
+            profileRepository.RemovePhoto(photo);
 
-            var result = await context.SaveChangesAsync(cancellationToken) > 0;
+            var result = await profileRepository.SaveChangesAsync(cancellationToken) > 0;
 
             return result
                 ? Result<Unit>.Success(Unit.Value)

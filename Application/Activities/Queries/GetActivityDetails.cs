@@ -2,12 +2,12 @@ using System;
 using API.DTOs;
 using Application.Core;
 using Application.Interfaces;
+using Application.Interfaces.IRepository;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Domain;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Persistence;
 
 namespace Application.Activities.Queries;
 
@@ -18,11 +18,11 @@ public class GetActivityDetails
         public required string Id { get; set; }
     }
 
-    public class Handler(AppDbContext context, IMapper mapper, IUserAccessor userAccessor) : IRequestHandler<Query, Result<ActivityDto>>
+    public class Handler(IActivityRepository activityRepository, IMapper mapper, IUserAccessor userAccessor) : IRequestHandler<Query, Result<ActivityDto>>
     {
         public async Task<Result<ActivityDto>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var activity = await context.Activities
+            var activity = await activityRepository.Query()
                 .ProjectTo<ActivityDto>(mapper.ConfigurationProvider,
                     new { currentUserId = userAccessor.GetUserIdOrNull()})
                 .FirstOrDefaultAsync(x => request.Id == x.Id, cancellationToken);

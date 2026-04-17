@@ -2,11 +2,10 @@ using System;
 using Application.Activities.DTOs;
 using Application.Core;
 using Application.Interfaces;
+using Application.Interfaces.IRepository;
 using AutoMapper;
 using Domain;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
-using Persistence;
 
 namespace Application.Activities.Commands;
 
@@ -18,15 +17,13 @@ public class AddComment
         public required string ActivityId { get; set; }
     }
 
-    public class Handler(AppDbContext context, IMapper mapper, IUserAccessor userAccessor) 
+    public class Handler(IActivityRepository activityRepository, IMapper mapper, IUserAccessor userAccessor) 
         : IRequestHandler<Command, Result<CommentDto>>
     {
         public async Task<Result<CommentDto>> Handle(Command request, CancellationToken cancellationToken)
         {
-            var activity = await context.Activities
-                .Include(x => x.Comments)
-                .ThenInclude(x => x.User)
-                .FirstOrDefaultAsync(x => x.Id == request.ActivityId, cancellationToken);
+            var activity = await activityRepository
+                .GetByIdWithCommentsAsync(request.ActivityId, cancellationToken);
 
             if (activity == null) return Result<CommentDto>.Failure("Activity not found", 404);
 
@@ -41,7 +38,7 @@ public class AddComment
 
             activity.Comments.Add(comment);
 
-            var result = await context.SaveChangesAsync(cancellationToken) > 0;
+            var result = await activityRepository.SaveChangesAsync(cancellationToken) > 0;
 
             return result
                 ? Result<CommentDto>.Success(mapper.Map<CommentDto>(comment))
