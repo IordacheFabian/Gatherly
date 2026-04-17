@@ -17,7 +17,7 @@ public class GetActivityList
     public class Query : IRequest<Result<PageList<ActivityDto, DateTime?>>>
     {
         public DateTime? Cursor { get; set; }
-        private int _pageSize = 3;
+        private int _pageSize = 10;
         public int PageSize
         {
             get => _pageSize;

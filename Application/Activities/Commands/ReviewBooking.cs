@@ -1,4 +1,5 @@
 using Application.Core;
+using Application.Interfaces;
 using Application.Interfaces.IRepository;
 using Domain;
 using MediatR;
@@ -14,7 +15,9 @@ public class ReviewBooking
         public required BookingStatus TargetStatus { get; set; }
     }
 
-    public class Handler(IActivityRepository activityRepository) : IRequestHandler<Command, Result<Unit>>
+    public class Handler(
+        IActivityRepository activityRepository,
+        INotificationService notificationService) : IRequestHandler<Command, Result<Unit>>
     {
         public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -59,7 +62,27 @@ public class ReviewBooking
             }
 
             var result = await activityRepository.SaveChangesAsync(cancellationToken) > 0;
-            return result ? Result<Unit>.Success(Unit.Value) : Result<Unit>.Failure("Failed to review booking", 400);
+            if (!result)
+            {
+                return Result<Unit>.Failure("Failed to review booking", 400);
+            }
+
+            if (request.TargetStatus == BookingStatus.Approved || request.TargetStatus == BookingStatus.Rejected)
+            {
+                await notificationService.NotifyAsync(new Notification
+                {
+                    RecipientUserId = booking.UserId!,
+                    ActivityId = activity.Id,
+                    Type = request.TargetStatus == BookingStatus.Approved
+                        ? NotificationType.BookingApproved
+                        : NotificationType.BookingRejected,
+                    Message = request.TargetStatus == BookingStatus.Approved
+                        ? $"Your booking for {activity.Title} was approved"
+                        : $"Your booking for {activity.Title} was rejected",
+                }, cancellationToken);
+            }
+
+            return Result<Unit>.Success(Unit.Value);
         }
 
         private static void PromoteWaitlist(Activity activity)

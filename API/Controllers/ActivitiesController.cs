@@ -14,9 +14,9 @@ public class ActivitiesController : BaseApiController
 {
     [AllowAnonymous]
     [HttpGet]
-    public async Task<ActionResult<PageList<ActivityDto, DateTime?>>> GetActivities(DateTime? cursor)
+    public async Task<ActionResult<PageList<ActivityDto, DateTime?>>> GetActivities(DateTime? cursor, int pageSize = 10)
     {
-        return HandleResult(await Mediator.Send(new GetActivityList.Query { Cursor = cursor }));
+        return HandleResult(await Mediator.Send(new GetActivityList.Query { Cursor = cursor, PageSize = pageSize }));
     }
 
     [AllowAnonymous]

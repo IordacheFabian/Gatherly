@@ -28,6 +28,7 @@ const ActivityDetails = () => {
 
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentBody, setCommentBody] = useState("");
+  const [replyTo, setReplyTo] = useState<Comment | null>(null);
   const [sendingComment, setSendingComment] = useState(false);
   const hubRef = useRef<ReturnType<typeof createCommentsHub> | null>(null);
 
@@ -97,8 +98,9 @@ const ActivityDetails = () => {
     setSendingComment(true);
     try {
       await hubRef.current.start();
-      await hubRef.current.sendComment(commentBody.trim());
+      await hubRef.current.sendComment(commentBody.trim(), replyTo?.id);
       setCommentBody("");
+      setReplyTo(null);
     } finally {
       setSendingComment(false);
     }
@@ -286,6 +288,15 @@ const ActivityDetails = () => {
                           </span>
                         </div>
                         <p className="text-sm text-muted-foreground">{comment.body}</p>
+                        {user && comment.userId !== user.id && (
+                          <button
+                            type="button"
+                            onClick={() => setReplyTo(comment)}
+                            className="mt-2 text-xs text-primary hover:underline"
+                          >
+                            Reply
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -295,11 +306,23 @@ const ActivityDetails = () => {
                 </div>
                 {user ? (
                   <div className="mt-4 flex gap-2">
+                    {replyTo && (
+                      <div className="w-full mb-2 rounded-lg border border-glass-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+                        Replying to {replyTo.displayName}
+                        <button
+                          type="button"
+                          className="ml-2 text-primary hover:underline"
+                          onClick={() => setReplyTo(null)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
                     <input
                       value={commentBody}
                       onChange={(e) => setCommentBody(e.target.value)}
                       onKeyDown={handleCommentKeyDown}
-                      placeholder="Add a comment..."
+                      placeholder={replyTo ? `Reply to ${replyTo.displayName}...` : "Add a comment..."}
                       className="flex-1 bg-muted/30 border border-glass-border rounded-lg px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary/50"
                     />
                     <Button

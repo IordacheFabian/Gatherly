@@ -14,7 +14,10 @@ public class UpdateAttendance
         public required string Id { get; set; }
     }
 
-    public class Handler(IUserAccessor userAccessor, IActivityRepository activityRepository) : IRequestHandler<Command, Result<Unit>>
+    public class Handler(
+        IUserAccessor userAccessor,
+        IActivityRepository activityRepository,
+        INotificationService notificationService) : IRequestHandler<Command, Result<Unit>>
     {
         public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -78,6 +81,22 @@ public class UpdateAttendance
             }
 
             var result = await activityRepository.SaveChangesAsync(cancellationToken) > 0;
+
+            if (result && isHost && activity.IsCancelled)
+            {
+                var notifications = activity.Attendees
+                    .Where(x => !x.IsHost && x.UserId != null && x.Status != BookingStatus.Rejected && x.Status != BookingStatus.Cancelled)
+                    .Select(x => new Notification
+                    {
+                        RecipientUserId = x.UserId!,
+                        ActivityId = activity.Id,
+                        Type = NotificationType.ActivityCancelled,
+                        Message = $"{activity.Title} has been cancelled by the host",
+                    })
+                    .ToList();
+
+                await notificationService.NotifyManyAsync(notifications, cancellationToken);
+            }
 
             return result ? Result<Unit>.Success(Unit.Value) : Result<Unit>.Failure("Failed to update attendance", 400);
         }

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import PageTransition from "@/components/PageTransition";
-import { activitiesApi } from "@/lib/api";
+import { activitiesApi, profilesApi } from "@/lib/api";
 import { categoryOptions } from "@/lib/activity-view";
 import { getErrorMessage } from "@/lib/error-utils";
 
@@ -285,6 +285,7 @@ const CreateActivity = () => {
 
       if (selectedImage) {
         await activitiesApi.uploadPhoto(activityId, selectedImage);
+        await profilesApi.addPhoto(selectedImage);
       }
 
       return activityId;

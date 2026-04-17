@@ -17,6 +17,7 @@ using Persistence;
 using Application.Interfaces.IRepository;
 using Persistence.Repositories;
 using System.Text.Json.Serialization;
+using API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -61,8 +62,10 @@ builder.Services.AddMediatR(x =>
 
 builder.Services.AddScoped<IUserAccessor, UserAccessor>();
 builder.Services.AddScoped<IPhotoService, PhotoService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IActivityRepository, ActivityRepository>();
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddAutoMapper(cfg => { }, typeof(MappingProfiles).Assembly);
 builder.Services.AddValidatorsFromAssemblyContaining<CreateActivityValidator>();
 builder.Services.AddTransient<ExceptionMiddleware>();
@@ -95,6 +98,7 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapGroup("api").MapIdentityApi<User>(); // api/login
 app.MapHub<CommentHub>("/comments");
+app.MapHub<NotificationHub>("/notifications");
 
 using var scope = app.Services.CreateScope();
 var services = scope.ServiceProvider;

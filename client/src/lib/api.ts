@@ -7,6 +7,7 @@ import type {
   LoginForm,
   UserProfile,
   Photo,
+  Notification,
 } from "@/lib/types";
 
 const API_BASE = "";
@@ -92,8 +93,8 @@ export const accountApi = {
 export const activitiesApi = {
   list: (cursor?: string | null) => {
     const url = cursor
-      ? `/api/activities?cursor=${encodeURIComponent(cursor)}`
-      : "/api/activities";
+      ? `/api/activities?cursor=${encodeURIComponent(cursor)}&pageSize=10`
+      : "/api/activities?pageSize=10";
     return request<PageList<Activity, string>>(url);
   },
   details: (id: string) => request<Activity>(`/api/activities/${id}`),
@@ -179,6 +180,18 @@ export const profilesApi = {
     }),
   getFollowList: (userId: string, predicate: "followers" | "followings") =>
     request<UserProfile[]>(`/api/profiles/${userId}/follow-list?predicate=${predicate}`),
+};
+
+export const notificationsApi = {
+  list: (limit = 50) => request<Notification[]>(`/api/notifications?limit=${limit}`),
+  markRead: (id: string) =>
+    request<void>(`/api/notifications/${id}/read`, {
+      method: "PUT",
+    }),
+  markAllRead: () =>
+    request<void>("/api/notifications/read-all", {
+      method: "PUT",
+    }),
 };
 
 export { ApiError };

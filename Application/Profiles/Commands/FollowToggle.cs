@@ -13,7 +13,10 @@ public class FollowToggle
         public required string TargetUserId { get; set; }
     }
 
-    public class Handler(IProfileRepository profileRepository, IUserAccessor userAccessor)
+    public class Handler(
+        IProfileRepository profileRepository,
+        IUserAccessor userAccessor,
+        INotificationService notificationService)
         : IRequestHandler<Command, Result<Unit>>
     {
         public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
@@ -38,9 +41,24 @@ public class FollowToggle
                 profileRepository.RemoveFollowing(following);
             }
 
-            return await profileRepository.SaveChangesAsync(cancellationToken) > 0
-                ? Result<Unit>.Success(Unit.Value)
-                : Result<Unit>.Failure("Failed to update following", 400);
+            var result = await profileRepository.SaveChangesAsync(cancellationToken) > 0;
+            if (!result)
+            {
+                return Result<Unit>.Failure("Failed to update following", 400);
+            }
+
+            if (following == null && observer.Id != target.Id)
+            {
+                await notificationService.NotifyAsync(new Domain.Notification
+                {
+                    RecipientUserId = target.Id,
+                    ActorUserId = observer.Id,
+                    Type = Domain.NotificationType.NewFollower,
+                    Message = $"{observer.DisplayName} started following you",
+                }, cancellationToken);
+            }
+
+            return Result<Unit>.Success(Unit.Value);
         }
     }
 }

@@ -18,6 +18,11 @@ export default defineConfig(({ mode }) => ({
         ws: true,
         secure: false,
       },
+      "/notifications": {
+        target: "https://localhost:5001",
+        ws: true,
+        secure: false,
+      },
     },
     hmr: {
       overlay: false,

@@ -35,8 +35,8 @@ export function createCommentsHub(activityId: string) {
     return () => connection.off("ReceiveComment", handler);
   };
 
-  const sendComment = async (body: string) => {
-    await connection.invoke("SendComment", { activityId, body });
+  const sendComment = async (body: string, parentCommentId?: string) => {
+    await connection.invoke("SendComment", { activityId, body, parentCommentId });
   };
 
   return {

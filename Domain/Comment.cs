@@ -14,4 +14,7 @@ public class Comment
 
     public required string ActivityId { get; set; }
     public Activity Activity { get; set; } = null!;
+
+    public string? ParentCommentId { get; set; }
+    public Comment? ParentComment { get; set; }
 }

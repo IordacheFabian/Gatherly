@@ -16,6 +16,8 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User>(op
 
     public required DbSet<Comment> Comments { get; set; }
 
+    public required DbSet<Notification> Notifications { get; set; }
+
     public required DbSet<UserFollowing> UserFollowings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -48,6 +50,36 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User>(op
                 .HasForeignKey(o => o.TargetId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        builder.Entity<Comment>()
+            .HasOne(x => x.ParentComment)
+            .WithMany()
+            .HasForeignKey(x => x.ParentCommentId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<Notification>()
+            .HasOne(x => x.RecipientUser)
+            .WithMany(x => x.Notifications)
+            .HasForeignKey(x => x.RecipientUserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Notification>()
+            .HasOne(x => x.ActorUser)
+            .WithMany()
+            .HasForeignKey(x => x.ActorUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<Notification>()
+            .HasOne(x => x.Activity)
+            .WithMany()
+            .HasForeignKey(x => x.ActivityId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<Notification>()
+            .HasOne(x => x.Comment)
+            .WithMany()
+            .HasForeignKey(x => x.CommentId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         var dateTimeConverter = new ValueConverter<DateTime, DateTime>(
             v => v.ToUniversalTime(),

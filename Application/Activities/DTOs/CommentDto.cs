@@ -11,4 +11,5 @@ public class CommentDto
     public required string UserId { get; set; }
     public required string DisplayName { get; set; } 
     public string? ImageUrl { get; set; }
+    public string? ParentCommentId { get; set; }
 }

@@ -69,6 +69,26 @@ export interface Comment {
   userId: string;
   displayName: string;
   imageUrl?: string | null;
+  parentCommentId?: string | null;
+}
+
+export type NotificationType =
+  | "BookingApproved"
+  | "BookingRejected"
+  | "NewFollower"
+  | "ActivityDateChanged"
+  | "CommentReply"
+  | "ActivityCancelled"
+  | "ActivityReminder";
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  message: string;
+  createdAt: string;
+  isRead: boolean;
+  activityId?: string | null;
+  commentId?: string | null;
 }
 
 export interface Photo {
