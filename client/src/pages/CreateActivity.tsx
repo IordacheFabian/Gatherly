@@ -11,6 +11,15 @@ import { activitiesApi } from "@/lib/api";
 import { categoryOptions } from "@/lib/activity-view";
 import { getErrorMessage } from "@/lib/error-utils";
 
+type GeoSuggestion = {
+  id: string;
+  label: string;
+  venue: string;
+  city: string;
+  latitude: string;
+  longitude: string;
+};
+
 const CreateActivity = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -30,6 +39,10 @@ const CreateActivity = () => {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [geoSuggestions, setGeoSuggestions] = useState<GeoSuggestion[]>([]);
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [hasResolvedCoordinates, setHasResolvedCoordinates] = useState(false);
 
   const minDateTime = useMemo(() => new Date(Date.now() + 5 * 60 * 1000).toISOString().slice(0, 16), []);
 
@@ -51,6 +64,7 @@ const CreateActivity = () => {
       latitude: String(editQuery.data.latitude),
       longitude: String(editQuery.data.longitude),
     });
+    setHasResolvedCoordinates(true);
     setImagePreview(editQuery.data.imageUrl ?? null);
   }, [editQuery.data]);
 
@@ -65,9 +79,120 @@ const CreateActivity = () => {
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+
+    if (field === "venue" || field === "city") {
+      setHasResolvedCoordinates(false);
+      setFormData((prev) => ({ ...prev, latitude: "0", longitude: "0" }));
+      setShowLocationSuggestions(true);
+    }
+
     setFieldErrors((prev) => {
       const next = { ...prev };
       delete next[field];
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    const query = [formData.venue.trim(), formData.city.trim()].filter(Boolean).join(", ");
+
+    if (query.length < 3) {
+      setGeoSuggestions([]);
+      setIsSearchingLocation(false);
+      return;
+    }
+
+    const abortController = new AbortController();
+    setIsSearchingLocation(true);
+
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&q=${encodeURIComponent(query)}`,
+          {
+            signal: abortController.signal,
+            headers: {
+              Accept: "application/json",
+            },
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error(`Location lookup failed with status ${response.status}`);
+        }
+
+        const data = (await response.json()) as Array<{
+          place_id: number;
+          display_name: string;
+          lat: string;
+          lon: string;
+          name?: string;
+          address?: {
+            city?: string;
+            town?: string;
+            village?: string;
+            municipality?: string;
+            county?: string;
+            state?: string;
+            road?: string;
+            house_number?: string;
+          };
+        }>;
+
+        const suggestions = data.map((item) => {
+          const city =
+            item.address?.city ??
+            item.address?.town ??
+            item.address?.village ??
+            item.address?.municipality ??
+            item.address?.county ??
+            item.address?.state ??
+            formData.city;
+
+          const road = [item.address?.house_number, item.address?.road].filter(Boolean).join(" ").trim();
+          const venue = item.name?.trim() || road || item.display_name.split(",")[0].trim();
+
+          return {
+            id: String(item.place_id),
+            label: item.display_name,
+            venue,
+            city,
+            latitude: item.lat,
+            longitude: item.lon,
+          } satisfies GeoSuggestion;
+        });
+
+        setGeoSuggestions(suggestions);
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          setGeoSuggestions([]);
+        }
+      } finally {
+        setIsSearchingLocation(false);
+      }
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      abortController.abort();
+    };
+  }, [formData.venue, formData.city]);
+
+  const handleSelectLocation = (suggestion: GeoSuggestion) => {
+    setFormData((prev) => ({
+      ...prev,
+      venue: suggestion.venue,
+      city: suggestion.city,
+      latitude: suggestion.latitude,
+      longitude: suggestion.longitude,
+    }));
+    setGeoSuggestions([]);
+    setShowLocationSuggestions(false);
+    setHasResolvedCoordinates(true);
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next.venue;
+      delete next.city;
       return next;
     });
   };
@@ -86,8 +211,9 @@ const CreateActivity = () => {
       nextErrors.date = "Choose a future date and time";
     }
 
-    if (Number.isNaN(Number(formData.latitude))) nextErrors.latitude = "Latitude must be a number";
-    if (Number.isNaN(Number(formData.longitude))) nextErrors.longitude = "Longitude must be a number";
+    if (!hasResolvedCoordinates) nextErrors.venue = "Choose a suggested location to set coordinates";
+    if (Number.isNaN(Number(formData.latitude))) nextErrors.venue = "Could not resolve latitude for this location";
+    if (Number.isNaN(Number(formData.longitude))) nextErrors.venue = "Could not resolve longitude for this location";
 
     setFieldErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -99,9 +225,7 @@ const CreateActivity = () => {
     { icon: Tag, label: "Category", field: "category", placeholder: "", type: "select" },
     { icon: Calendar, label: "Date & Time", field: "date", placeholder: "", type: "datetime-local" },
     { icon: MapPin, label: "City", field: "city", placeholder: "City", type: "text" },
-    { icon: MapPin, label: "Venue", field: "venue", placeholder: "Venue", type: "text" },
-    { icon: MapPin, label: "Latitude", field: "latitude", placeholder: "0", type: "number" },
-    { icon: MapPin, label: "Longitude", field: "longitude", placeholder: "0", type: "number" },
+    { icon: MapPin, label: "Venue", field: "venue", placeholder: "Start typing an address", type: "address-autocomplete" },
   ];
 
   const saveMutation = useMutation({
@@ -198,6 +322,43 @@ const CreateActivity = () => {
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
+              ) : type === "address-autocomplete" ? (
+                <div className="relative">
+                  <Input
+                    type="text"
+                    value={formData.venue}
+                    onChange={(e) => handleChange("venue", e.target.value)}
+                    onFocus={() => setShowLocationSuggestions(true)}
+                    onBlur={() => {
+                      window.setTimeout(() => {
+                        setShowLocationSuggestions(false);
+                      }, 150);
+                    }}
+                    placeholder={placeholder}
+                    className="bg-muted/30 border-glass-border focus:ring-primary/50"
+                  />
+                  {showLocationSuggestions && (isSearchingLocation || geoSuggestions.length > 0) && (
+                    <div className="absolute z-20 mt-1 w-full rounded-lg border border-glass-border bg-background/95 backdrop-blur-md shadow-lg overflow-hidden">
+                      {isSearchingLocation && (
+                        <p className="px-3 py-2 text-sm text-muted-foreground">Searching locations...</p>
+                      )}
+                      {!isSearchingLocation && geoSuggestions.map((suggestion) => (
+                        <button
+                          key={suggestion.id}
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            handleSelectLocation(suggestion);
+                          }}
+                          className="block w-full text-left px-3 py-2 hover:bg-muted/60 transition-colors"
+                        >
+                          <p className="text-sm font-medium truncate">{suggestion.venue}</p>
+                          <p className="text-xs text-muted-foreground truncate">{suggestion.label}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ) : (
                 <Input
                   type={type}
@@ -211,6 +372,20 @@ const CreateActivity = () => {
               {fieldErrors[field] && <p className="text-destructive text-sm mt-2">{fieldErrors[field]}</p>}
             </motion.div>
           ))}
+
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.42 }}
+            className="rounded-xl border border-glass-border bg-muted/20 p-4"
+          >
+            <p className="text-sm font-medium">Resolved coordinates</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {hasResolvedCoordinates
+                ? `${formData.latitude}, ${formData.longitude}`
+                : "Pick a location suggestion to auto-fill latitude and longitude."}
+            </p>
+          </motion.div>
 
           <motion.div
             initial={{ opacity: 0, x: -10 }}
