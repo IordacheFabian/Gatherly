@@ -12,6 +12,8 @@ interface FilterBarProps {
   onDateFilterChange: (date: string) => void;
   sortBy: string;
   onSortChange: (sort: string) => void;
+  minRating: string;
+  onMinRatingChange: (rating: string) => void;
   onClearFilters: () => void;
 }
 
@@ -26,6 +28,8 @@ const FilterBar = ({
   onDateFilterChange,
   sortBy,
   onSortChange,
+  minRating,
+  onMinRatingChange,
   onClearFilters,
 }: FilterBarProps) => {
   return (
@@ -58,6 +62,7 @@ const FilterBar = ({
           >
             <option value="date">Date</option>
             <option value="attendees">Attendees</option>
+            <option value="rating">Rating</option>
             <option value="title">Title</option>
           </select>
         </div>
@@ -79,6 +84,18 @@ const FilterBar = ({
           onChange={(e) => onDateFilterChange(e.target.value)}
           className="bg-muted/50 border border-glass-border rounded-lg px-3 py-1.5 text-sm text-foreground outline-none focus:ring-1 focus:ring-primary/50 transition-all"
         />
+
+        <select
+          value={minRating}
+          onChange={(e) => onMinRatingChange(e.target.value)}
+          className="bg-muted/50 border border-glass-border rounded-lg px-3 py-1.5 text-sm text-foreground outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+        >
+          <option value="0">Any rating</option>
+          <option value="2">2.0+ stars</option>
+          <option value="3">3.0+ stars</option>
+          <option value="4">4.0+ stars</option>
+          <option value="4.5">4.5+ stars</option>
+        </select>
 
         <button
           type="button"

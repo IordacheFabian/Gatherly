@@ -3,6 +3,8 @@ using System.Runtime.CompilerServices;
 using Application.Profiles.Commands;
 using Application.Profiles.DTOs;
 using Application.Profiles.Queries;
+using Application.Reviews.DTOs;
+using Application.Reviews.Queries;
 using Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -70,6 +72,17 @@ public class ProfilesController : BaseApiController
         {
             UserId = userId,
             Predicate = predicate
+        }));
+    }
+
+    [AllowAnonymous]
+    [HttpGet("{userId}/reviews")]
+    public async Task<ActionResult<List<HostReviewDto>>> GetHostReviews(string userId, int limit = 100)
+    {
+        return HandleResult(await Mediator.Send(new GetHostReviews.Query
+        {
+            HostUserId = userId,
+            Limit = limit,
         }));
     }
 }

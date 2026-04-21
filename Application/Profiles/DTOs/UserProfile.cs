@@ -12,4 +12,6 @@ public class UserProfile
     public bool Following { get; set; }
     public int FollowersCount { get; set; } 
     public int FollowingCount { get; set; } 
+    public double HostRatingAverage { get; set; }
+    public int HostReviewsCount { get; set; }
 }

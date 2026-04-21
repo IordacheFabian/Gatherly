@@ -17,6 +17,11 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User>(op
     public required DbSet<Comment> Comments { get; set; }
 
     public required DbSet<Notification> Notifications { get; set; }
+    public required DbSet<Payment> Payments { get; set; }
+    public required DbSet<ActivityReview> ActivityReviews { get; set; }
+    public required DbSet<SavedActivity> SavedActivities { get; set; }
+    public required DbSet<WishlistActivity> WishlistActivities { get; set; }
+    public required DbSet<ActivityViewHistory> ActivityViewHistory { get; set; }
 
     public required DbSet<UserFollowing> UserFollowings { get; set; }
 
@@ -80,6 +85,78 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User>(op
             .WithMany()
             .HasForeignKey(x => x.CommentId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<Payment>()
+            .HasOne(x => x.Activity)
+            .WithMany(x => x.Payments)
+            .HasForeignKey(x => x.ActivityId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Payment>()
+            .HasOne(x => x.User)
+            .WithMany(x => x.Payments)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<ActivityReview>()
+            .HasOne(x => x.Activity)
+            .WithMany(x => x.Reviews)
+            .HasForeignKey(x => x.ActivityId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<ActivityReview>()
+            .HasOne(x => x.HostUser)
+            .WithMany(x => x.ReviewsReceived)
+            .HasForeignKey(x => x.HostUserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<ActivityReview>()
+            .HasOne(x => x.ReviewerUser)
+            .WithMany(x => x.ReviewsWritten)
+            .HasForeignKey(x => x.ReviewerUserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<SavedActivity>(x => x.HasKey(k => new { k.UserId, k.ActivityId }));
+
+        builder.Entity<SavedActivity>()
+            .HasOne(x => x.User)
+            .WithMany(x => x.SavedActivities)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<SavedActivity>()
+            .HasOne(x => x.Activity)
+            .WithMany(x => x.SavedByUsers)
+            .HasForeignKey(x => x.ActivityId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<WishlistActivity>(x => x.HasKey(k => new { k.UserId, k.ActivityId, k.WishlistName }));
+
+        builder.Entity<WishlistActivity>()
+            .HasOne(x => x.User)
+            .WithMany(x => x.WishlistActivities)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<WishlistActivity>()
+            .HasOne(x => x.Activity)
+            .WithMany(x => x.WishlistedByUsers)
+            .HasForeignKey(x => x.ActivityId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<ActivityViewHistory>(x => x.HasKey(k => new { k.UserId, k.ActivityId }));
+
+        builder.Entity<ActivityViewHistory>()
+            .HasOne(x => x.User)
+            .WithMany(x => x.ActivityViewHistory)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<ActivityViewHistory>()
+            .HasOne(x => x.Activity)
+            .WithMany(x => x.ViewedByUsers)
+            .HasForeignKey(x => x.ActivityId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         var dateTimeConverter = new ValueConverter<DateTime, DateTime>(
             v => v.ToUniversalTime(),

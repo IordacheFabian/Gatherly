@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Calendar, MapPin, Users, ArrowRight } from "lucide-react";
+import { Calendar, MapPin, Users, ArrowRight, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Activity } from "@/lib/types";
 import { getActivityImage, isUserAttending, isUserHost } from "@/lib/activity-view";
@@ -57,6 +57,11 @@ const ActivityCard = ({ activity, index, currentUserId }: ActivityCardProps) => 
           <h3 className="font-display font-semibold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">
             {activity.title}
           </h3>
+          <div className="flex items-center gap-2 mb-2 text-xs">
+            <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+            <span className="text-foreground font-medium">{activity.ratingAverage.toFixed(1)}</span>
+            <span className="text-muted-foreground">({activity.ratingCount} review{activity.ratingCount === 1 ? "" : "s"})</span>
+          </div>
           <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
             {activity.description}
           </p>

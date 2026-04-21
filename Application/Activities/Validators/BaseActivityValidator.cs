@@ -33,6 +33,14 @@ public class BaseActivityValidator<T, TDto>
             .GreaterThan(0).WithMessage("Max participants must be greater than 0.")
             .LessThanOrEqualTo(1000).WithMessage("Max participants cannot exceed 1000.");
 
+        RuleFor(x => selector(x).PriceAmount)
+            .GreaterThanOrEqualTo(0).WithMessage("Price amount cannot be negative.")
+            .LessThanOrEqualTo(100000).WithMessage("Price amount cannot exceed 100000.");
+
+        RuleFor(x => selector(x).Currency)
+            .NotEmpty().WithMessage("Currency is required.")
+            .Length(3).WithMessage("Currency must be a 3-letter ISO code.");
+
         RuleFor(x => selector(x).BookingDeadline)
             .NotNull().WithMessage("Booking deadline is required.")
             .GreaterThan(DateTime.UtcNow).WithMessage("Booking deadline must be in the future.")

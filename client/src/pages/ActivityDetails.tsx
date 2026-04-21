@@ -10,6 +10,9 @@ import {
   MessageCircle,
   Edit,
   Trash2,
+  Star,
+  Bookmark,
+  ListPlus,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import PageTransition from "@/components/PageTransition";
@@ -19,6 +22,7 @@ import { useAuth } from "@/lib/auth-context";
 import { createCommentsHub } from "@/lib/commentsHub";
 import type { Comment } from "@/lib/types";
 import { getActivityImage, isUserAttending, isUserHost } from "@/lib/activity-view";
+import { toast } from "@/components/ui/sonner";
 
 const ActivityDetails = () => {
   const { id } = useParams();
@@ -30,6 +34,9 @@ const ActivityDetails = () => {
   const [commentBody, setCommentBody] = useState("");
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
   const [sendingComment, setSendingComment] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewBody, setReviewBody] = useState("");
+  const [wishlistName, setWishlistName] = useState("");
   const hubRef = useRef<ReturnType<typeof createCommentsHub> | null>(null);
 
   const activityQuery = useQuery({
@@ -39,6 +46,35 @@ const ActivityDetails = () => {
   });
 
   const activity = activityQuery.data;
+
+  useEffect(() => {
+    if (!id || !user) return;
+    void activitiesApi.trackView(id);
+  }, [id, user]);
+
+  const reviewsQuery = useQuery({
+    queryKey: ["activity-reviews", id],
+    queryFn: () => activitiesApi.getReviews(id!, 100),
+    enabled: Boolean(id),
+  });
+
+  const wishlistsQuery = useQuery({
+    queryKey: ["wishlists"],
+    queryFn: () => activitiesApi.getWishlists(),
+    enabled: Boolean(id && user),
+  });
+  const reviews = reviewsQuery.data ?? [];
+  const myReview = reviews.find((x) => x.reviewerUserId === user?.id);
+  const currentWishlistNames =
+    wishlistsQuery.data
+      ?.filter((group) => group.activities.some((a) => a.id === id))
+      .map((group) => group.name) ?? [];
+
+  useEffect(() => {
+    if (!myReview) return;
+    setReviewRating(myReview.rating);
+    setReviewBody(myReview.body);
+  }, [myReview]);
 
   useEffect(() => {
     if (!id || !user) return;
@@ -92,6 +128,53 @@ const ActivityDetails = () => {
     },
   });
 
+  const checkoutMutation = useMutation({
+    mutationFn: () => activitiesApi.mockCheckout(id!),
+    onSuccess: async (session) => {
+      await queryClient.invalidateQueries({ queryKey: ["activity", id] });
+      await queryClient.invalidateQueries({ queryKey: ["activities"] });
+      await queryClient.invalidateQueries({ queryKey: ["payments", "history"] });
+      toast.success(`Mock Stripe checkout succeeded. Receipt ${session.paymentId.slice(0, 8)} created.`);
+    },
+  });
+
+  const reviewMutation = useMutation({
+    mutationFn: () => activitiesApi.addOrUpdateReview(id!, { rating: reviewRating, body: reviewBody.trim() }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["activity-reviews", id] });
+      await queryClient.invalidateQueries({ queryKey: ["activity", id] });
+      await queryClient.invalidateQueries({ queryKey: ["activities"] });
+      await queryClient.invalidateQueries({ queryKey: ["profile", activity?.hostId] });
+    },
+  });
+
+  const toggleSavedMutation = useMutation({
+    mutationFn: () => activitiesApi.toggleSaved(id!),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["activity", id] });
+      await queryClient.invalidateQueries({ queryKey: ["activities"] });
+      await queryClient.invalidateQueries({ queryKey: ["saved-activities"] });
+      await queryClient.invalidateQueries({ queryKey: ["wishlists"] });
+    },
+  });
+
+  const addToWishlistMutation = useMutation({
+    mutationFn: (name: string) => activitiesApi.addToWishlist(id!, name),
+    onSuccess: async () => {
+      setWishlistName("");
+      await queryClient.invalidateQueries({ queryKey: ["activity", id] });
+      await queryClient.invalidateQueries({ queryKey: ["wishlists"] });
+    },
+  });
+
+  const removeFromWishlistMutation = useMutation({
+    mutationFn: (name: string) => activitiesApi.removeFromWishlist(id!, name),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["activity", id] });
+      await queryClient.invalidateQueries({ queryKey: ["wishlists"] });
+    },
+  });
+
   const sendComment = async () => {
     if (!hubRef.current || !commentBody.trim()) return;
 
@@ -141,16 +224,28 @@ const ActivityDetails = () => {
   const joined = isUserAttending(activity, user?.id);
   const mapQuery = encodeURIComponent(`${activity.venue}, ${activity.city}`);
   const currentStatus = activity.currentUserBookingStatus;
+  const canReview = Boolean(!host && user && currentStatus === "Approved" && new Date(activity.date).getTime() <= Date.now());
   const pendingBookings = activity.bookings.filter((b) => !b.isHost && (b.status === "Pending" || b.status === "Waitlisted"));
+  const reviewAccessMessage = (() => {
+    if (!user) return "Log in to leave a review after you attend this activity.";
+    if (host) return "Hosts cannot review their own activities.";
+    if (currentStatus !== "Approved") return "Only approved attendees can leave a review.";
+    if (new Date(activity.date).getTime() > Date.now()) return "Reviews open after the activity ends.";
+    return null;
+  })();
 
   const bookingActionLabel = (() => {
-    if (!currentStatus) return "Request booking";
+    if (!currentStatus) return activity.isPaid ? "Pay & reserve spot" : "Request booking";
     if (currentStatus === "Pending" || currentStatus === "Waitlisted" || currentStatus === "Approved") {
       return "Cancel booking";
     }
 
     return "Request booking again";
   })();
+
+  const priceLabel = activity.isPaid
+    ? `${new Intl.NumberFormat("en-US", { style: "currency", currency: activity.currency }).format(activity.priceAmount)} per booking`
+    : "Free activity";
 
   return (
     <PageTransition>
@@ -239,6 +334,17 @@ const ActivityDetails = () => {
                     <Users className="w-4 h-4 text-cyan" />
                     <span>{activity.approvedParticipantsCount}/{activity.maxParticipants} approved</span>
                   </div>
+                </div>
+
+                <div className="mb-4 rounded-lg border border-glass-border bg-muted/20 px-3 py-2 text-sm">
+                  <span className={activity.isPaid ? "text-foreground" : "text-emerald-300"}>{priceLabel}</span>
+                </div>
+
+                <div className="mb-4 rounded-lg border border-glass-border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
+                  <span className="inline-flex items-center gap-1 text-amber-300">
+                    <Star className="w-4 h-4 fill-amber-300" /> {activity.ratingAverage.toFixed(1)}
+                  </span>
+                  <span className="ml-2">({activity.ratingCount} review{activity.ratingCount === 1 ? "" : "s"})</span>
                 </div>
 
                 <div className="mb-6 rounded-lg border border-glass-border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
@@ -343,6 +449,70 @@ const ActivityDetails = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.25 }}
+                className="glass p-6 rounded-xl"
+              >
+                <h2 className="font-display font-semibold text-lg mb-4">Reviews</h2>
+
+                <div className="mb-6 rounded-lg border border-glass-border bg-muted/20 p-4">
+                  <p className="text-sm font-medium mb-2">{myReview ? "Update your review" : "Leave a review"}</p>
+                  <div className="flex items-center gap-2 mb-3">
+                    {Array.from({ length: 5 }).map((_, i) => {
+                      const value = i + 1;
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => {
+                            if (canReview) setReviewRating(value);
+                          }}
+                          className={`text-amber-300 ${canReview ? "cursor-pointer" : "cursor-not-allowed opacity-70"}`}
+                          disabled={!canReview}
+                        >
+                          <Star className={`w-5 h-5 ${value <= reviewRating ? "fill-amber-300" : ""}`} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <textarea
+                    value={reviewBody}
+                    onChange={(e) => setReviewBody(e.target.value)}
+                    className="w-full min-h-[90px] bg-muted/30 border border-glass-border rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary/50 disabled:opacity-70"
+                    placeholder="Share your experience with this activity and host..."
+                    disabled={!canReview}
+                  />
+                  {reviewAccessMessage && (
+                    <p className="mt-3 text-sm text-muted-foreground">{reviewAccessMessage}</p>
+                  )}
+                  <Button
+                    className="mt-3"
+                    onClick={() => reviewMutation.mutate()}
+                    disabled={!canReview || reviewMutation.isPending || reviewBody.trim().length < 5}
+                  >
+                    {myReview ? "Update review" : "Submit review"}
+                  </Button>
+                </div>
+
+                <div className="space-y-3">
+                  {reviews.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No reviews yet.</p>
+                  )}
+                  {reviews.map((review) => (
+                    <div key={review.id} className="rounded-lg border border-glass-border bg-muted/20 p-4">
+                      <div className="flex items-center justify-between gap-3 mb-2">
+                        <p className="font-medium">{review.reviewerDisplayName}</p>
+                        <p className="text-amber-300 text-sm">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{review.body}</p>
+                      <p className="text-xs text-muted-foreground mt-2">{new Date(review.createdAt).toLocaleString()}</p>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.26 }}
                 className="glass p-6 rounded-xl"
               >
                 <h2 className="font-display font-semibold text-lg mb-4 flex items-center gap-2">
@@ -460,8 +630,15 @@ const ActivityDetails = () => {
                   <Button
                     variant={joined ? "outline" : "default"}
                     className="w-full"
-                    onClick={() => attendMutation.mutate()}
-                    disabled={attendMutation.isPending}
+                    onClick={() => {
+                      if (!currentStatus && activity.isPaid) {
+                        checkoutMutation.mutate();
+                        return;
+                      }
+
+                      attendMutation.mutate();
+                    }}
+                    disabled={attendMutation.isPending || checkoutMutation.isPending}
                   >
                     {bookingActionLabel}
                   </Button>
@@ -475,6 +652,64 @@ const ActivityDetails = () => {
                   <p className="text-xs text-muted-foreground mt-3">
                     Your booking status: {currentStatus}
                   </p>
+                )}
+
+                {!host && activity.isPaid && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Paid bookings are automatically refunded if cancelled or rejected.
+                  </p>
+                )}
+
+                {user && (
+                  <div className="mt-5 pt-5 border-t border-glass-border space-y-3">
+                    <Button
+                      type="button"
+                      variant={activity.isSavedByCurrentUser ? "default" : "outline"}
+                      className="w-full"
+                      onClick={() => toggleSavedMutation.mutate()}
+                      disabled={toggleSavedMutation.isPending}
+                    >
+                      <Bookmark className="w-4 h-4 mr-1" />
+                      {activity.isSavedByCurrentUser ? "Saved" : "Save activity"}
+                    </Button>
+
+                    <div className="flex gap-2">
+                      <input
+                        value={wishlistName}
+                        onChange={(e) => setWishlistName(e.target.value)}
+                        placeholder="Wishlist name"
+                        className="flex-1 bg-muted/30 border border-glass-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary/50"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          const name = wishlistName.trim();
+                          if (!name) return;
+                          addToWishlistMutation.mutate(name);
+                        }}
+                        disabled={addToWishlistMutation.isPending || wishlistName.trim().length === 0}
+                      >
+                        <ListPlus className="w-4 h-4" />
+                      </Button>
+                    </div>
+
+                    {currentWishlistNames.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {currentWishlistNames.map((name) => (
+                          <button
+                            key={name}
+                            type="button"
+                            onClick={() => removeFromWishlistMutation.mutate(name)}
+                            className="px-2.5 py-1 rounded-full text-xs border border-primary/30 text-primary hover:bg-primary/10"
+                            disabled={removeFromWishlistMutation.isPending}
+                          >
+                            {name} x
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
               </motion.div>
 

@@ -22,6 +22,10 @@ public class MappingProfiles : Profile
         
         CreateMap<Activity, ActivityDto>()
             .ForMember(d => d.ImageUrl, o => o.MapFrom(s => s.ImageUrl))
+            .ForMember(d => d.IsPaid, o => o.MapFrom(s => s.PriceAmount > 0))
+            .ForMember(d => d.RatingCount, o => o.MapFrom(s => s.Reviews.Count))
+            .ForMember(d => d.RatingAverage, o => o.MapFrom(s =>
+                s.Reviews.Select(r => (double?)r.Rating).Average() ?? 0d))
             .ForMember(d => d.HostDisplayName, o => o.MapFrom(s =>
                 s.Attendees.FirstOrDefault(a => a.IsHost)!.User.DisplayName))
             .ForMember(d => d.HostId, o => o.MapFrom(s =>
@@ -37,6 +41,13 @@ public class MappingProfiles : Profile
                     .Where(a => a.UserId == currentUserId)
                     .Select(a => (BookingStatus?)a.Status)
                     .FirstOrDefault()))
+            .ForMember(d => d.IsSavedByCurrentUser, o => o.MapFrom(s =>
+                s.SavedByUsers.Any(x => x.UserId == currentUserId)))
+            .ForMember(d => d.CurrentUserLastViewedAt, o => o.MapFrom(s =>
+                s.ViewedByUsers
+                    .Where(x => x.UserId == currentUserId)
+                    .Select(x => (DateTime?)x.ViewedAt)
+                    .Max()))
             .ForMember(d => d.Bookings, o => o.MapFrom(s =>
                 s.Attendees.Where(a => !a.IsHost)))
             .ForMember(d => d.Attendees, o => o.MapFrom(s =>
@@ -52,6 +63,9 @@ public class MappingProfiles : Profile
             .ForMember(d => d.Id, o => o.MapFrom(s => s.User.Id))
             .ForMember(d => d.FollowersCount, o => o.MapFrom(s => s.User.Followers.Count))
             .ForMember(d => d.FollowingCount, o => o.MapFrom(s => s.User.Followings.Count))
+            .ForMember(d => d.HostReviewsCount, o => o.MapFrom(s => s.User.ReviewsReceived.Count))
+            .ForMember(d => d.HostRatingAverage, o => o.MapFrom(s =>
+                s.User.ReviewsReceived.Select(r => (double?)r.Rating).Average() ?? 0d))
             .ForMember(d => d.Following, o => o.MapFrom(
                 s => s.User.Followers.Any(x => x.Observer.Id == currentUserId)
             ));
@@ -59,6 +73,9 @@ public class MappingProfiles : Profile
         CreateMap<User, UserProfile>()
             .ForMember(d => d.FollowersCount, o => o.MapFrom(s => s.Followers.Count))
             .ForMember(d => d.FollowingCount, o => o.MapFrom(s => s.Followings.Count))
+            .ForMember(d => d.HostReviewsCount, o => o.MapFrom(s => s.ReviewsReceived.Count))
+            .ForMember(d => d.HostRatingAverage, o => o.MapFrom(s =>
+                s.ReviewsReceived.Select(r => (double?)r.Rating).Average() ?? 0d))
             .ForMember(d => d.Following, o => o.MapFrom(s => s.Followers.Any(
                 x => x.Observer.Id == currentUserId
             )));

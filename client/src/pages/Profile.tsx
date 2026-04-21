@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Activity,
+  Bookmark,
   Camera,
   Edit,
   Heart,
@@ -18,16 +19,18 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import ActivityCard from "@/components/ActivityCard";
 import PageTransition from "@/components/PageTransition";
-import { profilesApi } from "@/lib/api";
+import { activitiesApi, profilesApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 
-type TabKey = "photos" | "details" | "activities" | "followers" | "followings";
+type TabKey = "photos" | "details" | "activities" | "collections" | "followers" | "followings" | "reviews";
 type ActivityPredicate = "future" | "past" | "hosting";
 
 const tabs: Array<{ id: TabKey; label: string; icon: typeof ImageIcon }> = [
   { id: "photos", label: "Photos", icon: ImageIcon },
   { id: "details", label: "Profile Details", icon: User },
   { id: "activities", label: "Activities", icon: Activity },
+  { id: "collections", label: "Saved & Wishlists", icon: Bookmark },
+  { id: "reviews", label: "Host Reviews", icon: Star },
   { id: "followers", label: "Followers", icon: Users },
   { id: "followings", label: "Following", icon: Star },
 ];
@@ -73,6 +76,30 @@ const Profile = () => {
     queryKey: ["profile-activities", targetUserId, activityPredicate],
     queryFn: () => profilesApi.getActivities(targetUserId!, activityPredicate),
     enabled: Boolean(targetUserId) && activeTab === "activities",
+  });
+
+  const hostReviewsQuery = useQuery({
+    queryKey: ["host-reviews", targetUserId],
+    queryFn: () => profilesApi.getHostReviews(targetUserId!, 100),
+    enabled: Boolean(targetUserId) && activeTab === "reviews",
+  });
+
+  const collectionsSavedQuery = useQuery({
+    queryKey: ["saved-activities"],
+    queryFn: () => activitiesApi.getSavedActivities(),
+    enabled: isOwnProfile && activeTab === "collections",
+  });
+
+  const wishlistsQuery = useQuery({
+    queryKey: ["wishlists"],
+    queryFn: () => activitiesApi.getWishlists(),
+    enabled: isOwnProfile && activeTab === "collections",
+  });
+
+  const recentActivitiesQuery = useQuery({
+    queryKey: ["recently-viewed-activities"],
+    queryFn: () => activitiesApi.getRecentlyViewed(20),
+    enabled: isOwnProfile && activeTab === "collections",
   });
 
   const followMutation = useMutation({
@@ -123,6 +150,10 @@ const Profile = () => {
   const followEntries =
     activeTab === "followers" ? followersQuery.data ?? [] : followingsQuery.data ?? [];
   const profileActivities = activitiesQuery.data ?? [];
+  const hostReviews = hostReviewsQuery.data ?? [];
+  const savedActivities = collectionsSavedQuery.data ?? [];
+  const wishlists = wishlistsQuery.data ?? [];
+  const recentActivities = recentActivitiesQuery.data ?? [];
 
   const initials = useMemo(() => {
     const name = profile?.displayName ?? "User";
@@ -227,12 +258,13 @@ const Profile = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8"
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
           >
             {[
               { label: "Followers", value: String(profile.followersCount), icon: Heart },
               { label: "Following", value: String(profile.followingCount), icon: Users },
               { label: "Photos", value: String(photos.length), icon: Camera },
+              { label: "Host Rating", value: profile.hostReviewsCount > 0 ? `${profile.hostRatingAverage.toFixed(1)}★` : "No ratings", icon: Star },
             ].map((stat) => (
               <div key={stat.label} className="glass p-4 rounded-xl text-center hover-lift">
                 <stat.icon className="w-5 h-5 mx-auto mb-2 text-primary" />
@@ -243,7 +275,7 @@ const Profile = () => {
           </motion.div>
 
           <div className="flex gap-1 mb-8 overflow-x-auto pb-2">
-            {tabs.map((tab) => (
+            {tabs.filter((tab) => tab.id !== "collections" || isOwnProfile).map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -390,6 +422,87 @@ const Profile = () => {
               </motion.div>
             )}
 
+            {activeTab === "collections" && (
+              <motion.div
+                key="collections"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="space-y-8"
+              >
+                <div>
+                  <h2 className="font-display font-semibold text-lg mb-4">Saved activities</h2>
+                  {collectionsSavedQuery.isLoading ? (
+                    <p className="text-muted-foreground">Loading saved activities...</p>
+                  ) : savedActivities.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {savedActivities.map((activity, index) => (
+                        <ActivityCard
+                          key={activity.id}
+                          activity={activity}
+                          index={index}
+                          currentUserId={user?.id}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">No saved activities yet.</p>
+                  )}
+                </div>
+
+                <div>
+                  <h2 className="font-display font-semibold text-lg mb-4">Wishlists</h2>
+                  {wishlistsQuery.isLoading ? (
+                    <p className="text-muted-foreground">Loading wishlists...</p>
+                  ) : wishlists.length > 0 ? (
+                    <div className="space-y-6">
+                      {wishlists.map((wishlist) => (
+                        <div key={wishlist.name}>
+                          <h3 className="text-sm uppercase tracking-wide text-muted-foreground mb-3">{wishlist.name}</h3>
+                          {wishlist.activities.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                              {wishlist.activities.map((activity, index) => (
+                                <ActivityCard
+                                  key={`${wishlist.name}-${activity.id}`}
+                                  activity={activity}
+                                  index={index}
+                                  currentUserId={user?.id}
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-muted-foreground text-sm">No activities in this wishlist.</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">No wishlists yet.</p>
+                  )}
+                </div>
+
+                <div>
+                  <h2 className="font-display font-semibold text-lg mb-4">Recently viewed</h2>
+                  {recentActivitiesQuery.isLoading ? (
+                    <p className="text-muted-foreground">Loading recently viewed activities...</p>
+                  ) : recentActivities.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {recentActivities.map((activity, index) => (
+                        <ActivityCard
+                          key={activity.id}
+                          activity={activity}
+                          index={index}
+                          currentUserId={user?.id}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">No recently viewed activities yet.</p>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
             {(activeTab === "followers" || activeTab === "followings") && (
               <motion.div
                 key={activeTab}
@@ -425,6 +538,45 @@ const Profile = () => {
                 ))}
                 {!followEntries.length && (
                   <div className="text-sm text-muted-foreground">No users to show.</div>
+                )}
+              </motion.div>
+            )}
+
+            {activeTab === "reviews" && (
+              <motion.div
+                key="reviews"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="space-y-4"
+              >
+                <h2 className="font-display font-semibold text-lg">Host Reviews</h2>
+                <p className="text-sm text-muted-foreground">
+                  Average: {profile.hostReviewsCount > 0 ? profile.hostRatingAverage.toFixed(1) : "0.0"} ({profile.hostReviewsCount} review{profile.hostReviewsCount === 1 ? "" : "s"})
+                </p>
+
+                {hostReviewsQuery.isLoading ? (
+                  <p className="text-muted-foreground">Loading host reviews...</p>
+                ) : hostReviews.length > 0 ? (
+                  <div className="space-y-3">
+                    {hostReviews.map((review) => (
+                      <div key={review.id} className="glass rounded-xl p-4">
+                        <div className="flex items-center justify-between gap-3 mb-2">
+                          <div>
+                            <p className="font-medium">{review.reviewerDisplayName}</p>
+                            <Link to={`/activity/${review.activityId}`} className="text-xs text-primary hover:underline">
+                              {review.activityTitle}
+                            </Link>
+                          </div>
+                          <div className="text-sm text-amber-300">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</div>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{review.body}</p>
+                        <p className="text-xs text-muted-foreground mt-2">{new Date(review.createdAt).toLocaleString()}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">No host reviews yet.</p>
                 )}
               </motion.div>
             )}

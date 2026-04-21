@@ -11,6 +11,8 @@ export interface UserProfile {
   following: boolean;
   followersCount: number;
   followingCount: number;
+  hostRatingAverage: number;
+  hostReviewsCount: number;
 }
 
 export type BookingStatus = "Approved" | "Pending" | "Waitlisted" | "Rejected" | "Cancelled";
@@ -33,6 +35,9 @@ export interface Activity {
   maxParticipants: number;
   bookingDeadline?: string | null;
   requiresHostConfirmation: boolean;
+  priceAmount: number;
+  currency: string;
+  isPaid: boolean;
   imageUrl?: string | null;
   hostDisplayName: string;
   hostId: string;
@@ -44,8 +49,45 @@ export interface Activity {
   pendingBookingsCount: number;
   waitlistCount: number;
   currentUserBookingStatus?: BookingStatus | null;
+  ratingAverage: number;
+  ratingCount: number;
+  isSavedByCurrentUser: boolean;
+  currentUserWishlistNames: string[];
+  currentUserLastViewedAt?: string | null;
   attendees: UserProfile[];
   bookings: ActivityBooking[];
+}
+
+export interface WishlistGroup {
+  name: string;
+  activities: Activity[];
+}
+
+export interface ActivityReview {
+  id: string;
+  activityId: string;
+  hostUserId: string;
+  reviewerUserId: string;
+  reviewerDisplayName: string;
+  reviewerImageUrl?: string | null;
+  rating: number;
+  body: string;
+  createdAt: string;
+  updatedAt?: string | null;
+}
+
+export interface HostReview {
+  id: string;
+  activityId: string;
+  activityTitle: string;
+  activityDate: string;
+  reviewerUserId: string;
+  reviewerDisplayName: string;
+  reviewerImageUrl?: string | null;
+  rating: number;
+  body: string;
+  createdAt: string;
+  updatedAt?: string | null;
 }
 
 export interface BaseActivityForm {
@@ -60,6 +102,50 @@ export interface BaseActivityForm {
   maxParticipants: number;
   bookingDeadline?: string | null;
   requiresHostConfirmation: boolean;
+  priceAmount: number;
+  currency: string;
+}
+
+export type PaymentStatus = "Pending" | "Succeeded" | "Refunded" | "Failed";
+
+export interface CheckoutSession {
+  paymentId: string;
+  checkoutSessionId: string;
+  checkoutUrl: string;
+  status: string;
+}
+
+export interface PaymentHistoryItem {
+  id: string;
+  activityId: string;
+  activityTitle: string;
+  amount: number;
+  currency: string;
+  status: PaymentStatus;
+  createdAt: string;
+  paidAt?: string | null;
+  refundedAt?: string | null;
+  invoiceNumber: string;
+  receiptNumber: string;
+}
+
+export interface PaymentReceipt {
+  paymentId: string;
+  invoiceNumber: string;
+  receiptNumber: string;
+  checkoutSessionId: string;
+  provider: string;
+  activityId: string;
+  activityTitle: string;
+  activityDate: string;
+  venue: string;
+  city: string;
+  amount: number;
+  currency: string;
+  status: PaymentStatus;
+  createdAt: string;
+  paidAt?: string | null;
+  refundedAt?: string | null;
 }
 
 export interface Comment {

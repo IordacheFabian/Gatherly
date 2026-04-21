@@ -15,6 +15,8 @@ public class Activity
     public int MaxParticipants { get; set; } = 20;
     public DateTime? BookingDeadline { get; set; }
     public bool RequiresHostConfirmation { get; set; } = true;
+    public decimal PriceAmount { get; set; } = 0m;
+    public string Currency { get; set; } = "USD";
     public string? ImageUrl { get; set; }
     public string? ImagePublicId { get; set; }
 
@@ -27,5 +29,10 @@ public class Activity
     // navigation props
     public ICollection<ActivityAttendee> Attendees { get; set; } = [];
     public ICollection<Comment> Comments { get; set; } = [];
+    public ICollection<Payment> Payments { get; set; } = [];
+    public ICollection<ActivityReview> Reviews { get; set; } = [];
+    public ICollection<SavedActivity> SavedByUsers { get; set; } = [];
+    public ICollection<WishlistActivity> WishlistedByUsers { get; set; } = [];
+    public ICollection<ActivityViewHistory> ViewedByUsers { get; set; } = [];
 
 }

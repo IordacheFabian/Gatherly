@@ -18,5 +18,11 @@ public class User : IdentityUser
     public ICollection<UserFollowing> Followers { get; set; } = [];
 
     public ICollection<Notification> Notifications { get; set; } = [];
+    public ICollection<Payment> Payments { get; set; } = [];
+    public ICollection<ActivityReview> ReviewsWritten { get; set; } = [];
+    public ICollection<ActivityReview> ReviewsReceived { get; set; } = [];
+    public ICollection<SavedActivity> SavedActivities { get; set; } = [];
+    public ICollection<WishlistActivity> WishlistActivities { get; set; } = [];
+    public ICollection<ActivityViewHistory> ActivityViewHistory { get; set; } = [];
 }
 

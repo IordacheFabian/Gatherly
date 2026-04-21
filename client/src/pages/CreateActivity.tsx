@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar, MapPin, Type, AlignLeft, Tag, ArrowLeft, ImagePlus, Users, CheckCircle } from "lucide-react";
+import { Calendar, MapPin, Type, AlignLeft, Tag, ArrowLeft, ImagePlus, Users, CheckCircle, Banknote } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,8 @@ const CreateActivity = () => {
     maxParticipants: "20",
     bookingDeadline: "",
     requiresHostConfirmation: "true",
+    priceAmount: "0",
+    currency: "USD",
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -69,6 +71,8 @@ const CreateActivity = () => {
       maxParticipants: String(editQuery.data.maxParticipants),
       bookingDeadline: editQuery.data.bookingDeadline ? editQuery.data.bookingDeadline.slice(0, 16) : editQuery.data.date.slice(0, 16),
       requiresHostConfirmation: String(editQuery.data.requiresHostConfirmation),
+      priceAmount: String(editQuery.data.priceAmount),
+      currency: editQuery.data.currency,
     });
     setHasResolvedCoordinates(true);
     setImagePreview(editQuery.data.imageUrl ?? null);
@@ -223,6 +227,12 @@ const CreateActivity = () => {
     if (!formData.maxParticipants || Number(formData.maxParticipants) < 1) {
       nextErrors.maxParticipants = "Max participants must be at least 1";
     }
+    if (Number(formData.priceAmount) < 0) {
+      nextErrors.priceAmount = "Price cannot be negative";
+    }
+    if (!formData.currency.trim() || formData.currency.trim().length !== 3) {
+      nextErrors.currency = "Currency must be a 3-letter code, e.g. USD";
+    }
 
     if (formData.date && new Date(formData.date).getTime() < Date.now() && !editId) {
       nextErrors.date = "Choose a future date and time";
@@ -252,6 +262,8 @@ const CreateActivity = () => {
     { icon: Calendar, label: "Date & Time", field: "date", placeholder: "", type: "datetime-local" },
     { icon: Calendar, label: "Booking Deadline", field: "bookingDeadline", placeholder: "", type: "datetime-local" },
     { icon: Users, label: "Max Participants", field: "maxParticipants", placeholder: "20", type: "number" },
+    { icon: Banknote, label: "Price per Booking", field: "priceAmount", placeholder: "0", type: "number" },
+    { icon: Tag, label: "Currency", field: "currency", placeholder: "USD", type: "text" },
     { icon: CheckCircle, label: "Host Confirmation", field: "requiresHostConfirmation", placeholder: "", type: "booking-confirmation" },
     { icon: MapPin, label: "City", field: "city", placeholder: "City", type: "text" },
     { icon: MapPin, label: "Venue", field: "venue", placeholder: "Start typing an address", type: "address-autocomplete" },
@@ -271,6 +283,8 @@ const CreateActivity = () => {
         maxParticipants: Number(formData.maxParticipants),
         bookingDeadline: formData.bookingDeadline ? new Date(formData.bookingDeadline).toISOString() : null,
         requiresHostConfirmation: formData.requiresHostConfirmation === "true",
+        priceAmount: Number(formData.priceAmount),
+        currency: formData.currency.trim().toUpperCase(),
       };
 
       if (editId) {

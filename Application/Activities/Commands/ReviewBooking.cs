@@ -3,6 +3,7 @@ using Application.Interfaces;
 using Application.Interfaces.IRepository;
 using Domain;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Activities.Commands;
 
@@ -17,7 +18,8 @@ public class ReviewBooking
 
     public class Handler(
         IActivityRepository activityRepository,
-        INotificationService notificationService) : IRequestHandler<Command, Result<Unit>>
+        INotificationService notificationService,
+        IPaymentRepository paymentRepository) : IRequestHandler<Command, Result<Unit>>
     {
         public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -56,6 +58,11 @@ public class ReviewBooking
             booking.Status = request.TargetStatus;
             booking.StatusUpdatedAt = DateTime.UtcNow;
 
+            if (request.TargetStatus == BookingStatus.Rejected && booking.UserId != null)
+            {
+                await TryRefundLatestPaymentAsync(paymentRepository, activity.Id, booking.UserId, cancellationToken);
+            }
+
             if (wasApproved && request.TargetStatus != BookingStatus.Approved)
             {
                 PromoteWaitlist(activity);
@@ -83,6 +90,26 @@ public class ReviewBooking
             }
 
             return Result<Unit>.Success(Unit.Value);
+        }
+
+        private static async Task TryRefundLatestPaymentAsync(
+            IPaymentRepository paymentRepository,
+            string activityId,
+            string userId,
+            CancellationToken cancellationToken)
+        {
+            var payment = await paymentRepository.Query()
+                .Where(x => x.ActivityId == activityId && x.UserId == userId && x.Status == PaymentStatus.Succeeded)
+                .OrderByDescending(x => x.PaidAt ?? x.CreatedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (payment == null)
+            {
+                return;
+            }
+
+            payment.Status = PaymentStatus.Refunded;
+            payment.RefundedAt = DateTime.UtcNow;
         }
 
         private static void PromoteWaitlist(Activity activity)

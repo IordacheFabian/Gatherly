@@ -19,4 +19,6 @@ public class BaseActivityDto
     public int MaxParticipants { get; set; } = 20;
     public DateTime? BookingDeadline { get; set; }
     public bool RequiresHostConfirmation { get; set; } = true;
+    public decimal PriceAmount { get; set; } = 0m;
+    public string Currency { get; set; } = "USD";
 }

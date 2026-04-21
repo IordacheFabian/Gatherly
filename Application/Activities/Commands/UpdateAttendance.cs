@@ -4,6 +4,7 @@ using Application.Interfaces;
 using Application.Interfaces.IRepository;
 using Domain;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Activities.Commands;
 
@@ -17,7 +18,8 @@ public class UpdateAttendance
     public class Handler(
         IUserAccessor userAccessor,
         IActivityRepository activityRepository,
-        INotificationService notificationService) : IRequestHandler<Command, Result<Unit>>
+        INotificationService notificationService,
+        IPaymentRepository paymentRepository) : IRequestHandler<Command, Result<Unit>>
     {
         public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -49,6 +51,11 @@ public class UpdateAttendance
 
                 if (booking == null)
                 {
+                    if (activity.PriceAmount > 0)
+                    {
+                        return Result<Unit>.Failure("This activity is paid. Complete mock checkout to reserve a spot.", 400);
+                    }
+
                     var newStatus = ResolveRequestedStatus(activity);
                     activity.Attendees.Add(new ActivityAttendee
                     {
@@ -67,6 +74,8 @@ public class UpdateAttendance
                         booking.Status = BookingStatus.Cancelled;
                         booking.StatusUpdatedAt = DateTime.UtcNow;
 
+                        await TryRefundLatestPaymentAsync(paymentRepository, activity.Id, user.Id, cancellationToken);
+
                         if (wasApproved)
                         {
                             PromoteWaitlist(activity);
@@ -84,6 +93,11 @@ public class UpdateAttendance
 
             if (result && isHost && activity.IsCancelled)
             {
+                foreach (var attendee in activity.Attendees.Where(x => !x.IsHost && x.UserId != null))
+                {
+                    await TryRefundLatestPaymentAsync(paymentRepository, activity.Id, attendee.UserId!, cancellationToken);
+                }
+
                 var notifications = activity.Attendees
                     .Where(x => !x.IsHost && x.UserId != null && x.Status != BookingStatus.Rejected && x.Status != BookingStatus.Cancelled)
                     .Select(x => new Notification
@@ -99,6 +113,26 @@ public class UpdateAttendance
             }
 
             return result ? Result<Unit>.Success(Unit.Value) : Result<Unit>.Failure("Failed to update attendance", 400);
+        }
+
+        private static async Task TryRefundLatestPaymentAsync(
+            IPaymentRepository paymentRepository,
+            string activityId,
+            string userId,
+            CancellationToken cancellationToken)
+        {
+            var payment = await paymentRepository.Query()
+                .Where(x => x.ActivityId == activityId && x.UserId == userId && x.Status == PaymentStatus.Succeeded)
+                .OrderByDescending(x => x.PaidAt ?? x.CreatedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (payment == null)
+            {
+                return;
+            }
+
+            payment.Status = PaymentStatus.Refunded;
+            payment.RefundedAt = DateTime.UtcNow;
         }
 
         private static BookingStatus ResolveRequestedStatus(Activity activity)

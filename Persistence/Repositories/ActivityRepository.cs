@@ -22,6 +22,21 @@ public class ActivityRepository(AppDbContext context) : IActivityRepository
         return context.Comments.AsQueryable();
     }
 
+    public IQueryable<SavedActivity> QuerySavedActivities()
+    {
+        return context.SavedActivities.AsQueryable();
+    }
+
+    public IQueryable<WishlistActivity> QueryWishlistActivities()
+    {
+        return context.WishlistActivities.AsQueryable();
+    }
+
+    public IQueryable<ActivityViewHistory> QueryViewHistory()
+    {
+        return context.ActivityViewHistory.AsQueryable();
+    }
+
     public Task<Activity?> GetByIdAsync(string id, CancellationToken cancellationToken)
     {
         return context.Activities.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
@@ -46,6 +61,31 @@ public class ActivityRepository(AppDbContext context) : IActivityRepository
     public async Task AddAsync(Activity activity, CancellationToken cancellationToken)
     {
         await context.Activities.AddAsync(activity, cancellationToken);
+    }
+
+    public void AddSavedActivity(SavedActivity savedActivity)
+    {
+        context.SavedActivities.Add(savedActivity);
+    }
+
+    public void RemoveSavedActivity(SavedActivity savedActivity)
+    {
+        context.SavedActivities.Remove(savedActivity);
+    }
+
+    public void AddWishlistActivity(WishlistActivity wishlistActivity)
+    {
+        context.WishlistActivities.Add(wishlistActivity);
+    }
+
+    public void RemoveWishlistActivity(WishlistActivity wishlistActivity)
+    {
+        context.WishlistActivities.Remove(wishlistActivity);
+    }
+
+    public void AddViewHistory(ActivityViewHistory viewHistory)
+    {
+        context.ActivityViewHistory.Add(viewHistory);
     }
 
     public void Update(Activity activity)

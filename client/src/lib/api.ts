@@ -8,6 +8,12 @@ import type {
   UserProfile,
   Photo,
   Notification,
+  CheckoutSession,
+  PaymentHistoryItem,
+  PaymentReceipt,
+  ActivityReview,
+  HostReview,
+  WishlistGroup,
 } from "@/lib/types";
 
 const API_BASE = "";
@@ -124,6 +130,17 @@ export const activitiesApi = {
     request<void>(`/api/activities/${activityId}/bookings/${userId}/reject`, {
       method: "POST",
     }),
+  mockCheckout: (activityId: string) =>
+    request<CheckoutSession>(`/api/activities/${activityId}/checkout/mock`, {
+      method: "POST",
+    }),
+  getReviews: (activityId: string, limit = 100) =>
+    request<ActivityReview[]>(`/api/activities/${activityId}/reviews?limit=${limit}`),
+  addOrUpdateReview: (activityId: string, payload: { rating: number; body: string }) =>
+    request<ActivityReview>(`/api/activities/${activityId}/reviews`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
   uploadPhoto: async (id: string, file: File) => {
     const formData = new FormData();
     formData.append("file", file);
@@ -141,6 +158,30 @@ export const activitiesApi = {
 
     return response.json() as Promise<{ publicId: string; url: string }>;
   },
+  toggleSaved: (activityId: string) =>
+    request<{ isSaved: boolean }>(`/api/activities/${activityId}/save`, {
+      method: "POST",
+    }),
+  getSavedActivities: () => request<Activity[]>("/api/activities/saved"),
+  addToWishlist: (activityId: string, wishlistName: string) =>
+    request<void>(`/api/activities/${activityId}/wishlists`, {
+      method: "POST",
+      body: JSON.stringify({ wishlistName }),
+    }),
+  removeFromWishlist: (activityId: string, wishlistName: string) =>
+    request<void>(
+      `/api/activities/${activityId}/wishlists/${encodeURIComponent(wishlistName)}`,
+      {
+        method: "DELETE",
+      },
+    ),
+  getWishlists: () => request<WishlistGroup[]>("/api/activities/wishlists"),
+  trackView: (activityId: string) =>
+    request<void>(`/api/activities/${activityId}/view`, {
+      method: "POST",
+    }),
+  getRecentlyViewed: (limit = 20) =>
+    request<Activity[]>(`/api/activities/recently-viewed?limit=${limit}`),
 };
 
 export const profilesApi = {
@@ -180,6 +221,8 @@ export const profilesApi = {
     }),
   getFollowList: (userId: string, predicate: "followers" | "followings") =>
     request<UserProfile[]>(`/api/profiles/${userId}/follow-list?predicate=${predicate}`),
+  getHostReviews: (userId: string, limit = 100) =>
+    request<HostReview[]>(`/api/profiles/${userId}/reviews?limit=${limit}`),
 };
 
 export const notificationsApi = {
@@ -192,6 +235,11 @@ export const notificationsApi = {
     request<void>("/api/notifications/read-all", {
       method: "PUT",
     }),
+};
+
+export const paymentsApi = {
+  history: (limit = 50) => request<PaymentHistoryItem[]>(`/api/payments/history?limit=${limit}`),
+  receipt: (paymentId: string) => request<PaymentReceipt>(`/api/payments/${paymentId}/receipt`),
 };
 
 export { ApiError };

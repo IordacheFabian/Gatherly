@@ -17,6 +17,7 @@ const Index = () => {
   const [cityFilter, setCityFilter] = useState("All");
   const [dateFilter, setDateFilter] = useState("");
   const [sortBy, setSortBy] = useState("date");
+  const [minRating, setMinRating] = useState("0");
   const { user } = useAuth();
 
   const activitiesQuery = useInfiniteQuery({
@@ -58,18 +59,20 @@ const Index = () => {
         activeCategory === "All" || a.category.toLowerCase() === normalizedCategory;
       const matchesCity = cityFilter === "All" || a.city.toLowerCase() === cityFilter.toLowerCase();
       const matchesDate = !dateFilter || a.date.slice(0, 10) === dateFilter;
+      const matchesRating = a.ratingAverage >= Number(minRating);
 
-      return matchesSearch && matchesCat && matchesCity && matchesDate;
+      return matchesSearch && matchesCat && matchesCity && matchesDate && matchesRating;
     });
 
     result.sort((a, b) => {
       if (sortBy === "date") return new Date(a.date).getTime() - new Date(b.date).getTime();
       if (sortBy === "attendees") return b.attendees.length - a.attendees.length;
+      if (sortBy === "rating") return b.ratingAverage - a.ratingAverage;
       return a.title.localeCompare(b.title);
     });
 
     return result;
-  }, [activities, searchQuery, activeCategory, cityFilter, dateFilter, sortBy]);
+  }, [activities, searchQuery, activeCategory, cityFilter, dateFilter, minRating, sortBy]);
 
   return (
     <PageTransition>
@@ -87,12 +90,15 @@ const Index = () => {
           onDateFilterChange={setDateFilter}
           sortBy={sortBy}
           onSortChange={setSortBy}
+          minRating={minRating}
+          onMinRatingChange={setMinRating}
           onClearFilters={() => {
             setActiveCategory("All");
             setCityFilter("All");
             setDateFilter("");
             setSearchQuery("");
             setSortBy("date");
+            setMinRating("0");
           }}
         />
 

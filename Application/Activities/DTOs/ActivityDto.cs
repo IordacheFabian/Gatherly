@@ -15,6 +15,9 @@ public class ActivityDto
     public int MaxParticipants { get; set; }
     public DateTime? BookingDeadline { get; set; }
     public bool RequiresHostConfirmation { get; set; }
+    public decimal PriceAmount { get; set; }
+    public string Currency { get; set; } = "USD";
+    public bool IsPaid { get; set; }
     public string? ImageUrl { get; set; }
     public required string HostDisplayName { get; set; }
     public required string HostId { get; set; }
@@ -30,6 +33,11 @@ public class ActivityDto
     public int PendingBookingsCount { get; set; }
     public int WaitlistCount { get; set; }
     public BookingStatus? CurrentUserBookingStatus { get; set; }
+    public double RatingAverage { get; set; }
+    public int RatingCount { get; set; }
+    public bool IsSavedByCurrentUser { get; set; }
+    public ICollection<string> CurrentUserWishlistNames { get; set; } = [];
+    public DateTime? CurrentUserLastViewedAt { get; set; }
 
     // navigation props
     public ICollection<UserProfile> Attendees { get; set; } = [];
