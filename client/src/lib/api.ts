@@ -182,6 +182,8 @@ export const activitiesApi = {
     }),
   getRecentlyViewed: (limit = 20) =>
     request<Activity[]>(`/api/activities/recently-viewed?limit=${limit}`),
+  getRecommended: (limit = 12) =>
+    request<Activity[]>(`/api/activities/recommended?limit=${limit}`),
 };
 
 export const profilesApi = {

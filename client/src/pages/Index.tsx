@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Plus } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import HeroSection from "@/components/HeroSection";
 import FilterBar from "@/components/FilterBar";
 import ActivityCard from "@/components/ActivityCard";
@@ -25,6 +25,13 @@ const Index = () => {
     queryFn: ({ pageParam }) => activitiesApi.list(pageParam),
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
+  });
+
+  const recommendationsQuery = useQuery({
+    queryKey: ["recommended-activities", user?.id],
+    queryFn: () => activitiesApi.getRecommended(6),
+    enabled: Boolean(user?.id),
+    staleTime: 1000 * 60 * 5,
   });
 
   const activities = useMemo(
@@ -74,6 +81,8 @@ const Index = () => {
     return result;
   }, [activities, searchQuery, activeCategory, cityFilter, dateFilter, minRating, sortBy]);
 
+  const recommendedActivities = recommendationsQuery.data ?? [];
+
   return (
     <PageTransition>
       <HeroSection searchQuery={searchQuery} onSearchChange={setSearchQuery} />
@@ -101,6 +110,28 @@ const Index = () => {
             setMinRating("0");
           }}
         />
+
+        {user && recommendedActivities.length > 0 && (
+          <div className="mb-10">
+            <div className="mb-4 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <h2 className="font-display text-xl font-semibold">Recommended for You</h2>
+            </div>
+            <p className="mb-5 text-sm text-muted-foreground">
+              Based on hosts you follow, your bookings, favorite categories, and nearby events.
+            </p>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {recommendedActivities.map((activity, i) => (
+                <ActivityCard
+                  key={`recommended-${activity.id}`}
+                  activity={activity}
+                  index={i}
+                  currentUserId={user?.id}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         {activitiesQuery.isLoading && (
           <div className="text-muted-foreground py-8">Loading activities...</div>

@@ -63,6 +63,9 @@ builder.Services.AddMediatR(x =>
 builder.Services.AddScoped<IUserAccessor, UserAccessor>();
 builder.Services.AddScoped<IPhotoService, PhotoService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
+builder.Services.AddSingleton(sp => sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<SmtpSettings>>().Value);
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IActivityRepository, ActivityRepository>();
 builder.Services.AddScoped<IActivityReviewRepository, ActivityReviewRepository>();
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();

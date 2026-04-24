@@ -117,7 +117,11 @@ const Navbar = () => {
                 key={link.to}
                 to={link.to}
                 className="relative px-4 py-2 text-sm font-medium transition-colors duration-200 rounded-lg hover:text-foreground"
-                style={{ color: isActive ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))" }}
+                style={{
+                  color: isActive
+                    ? "hsl(var(--primary))"
+                    : "hsl(var(--muted-foreground))",
+                }}
               >
                 {link.label}
                 {isActive && (
@@ -132,11 +136,44 @@ const Navbar = () => {
           })}
           {user && (
             <Link
+              to="/dashboard"
+              className="relative px-4 py-2 text-sm font-medium transition-colors duration-200 rounded-lg hover:text-foreground"
+              style={{
+                color:
+                  location.pathname === "/dashboard"
+                    ? "hsl(var(--primary))"
+                    : "hsl(var(--muted-foreground))",
+              }}
+            >
+              Dashboard
+              {location.pathname === "/dashboard" && (
+                <motion.div
+                  layoutId="nav-indicator"
+                  className="absolute bottom-0 left-2 right-2 h-0.5 gradient-primary rounded-full"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
+            </Link>
+          )}
+          {user && (
+            <Link
               to="/payments"
               className="relative px-4 py-2 text-sm font-medium transition-colors duration-200 rounded-lg hover:text-foreground"
-              style={{ color: location.pathname === "/payments" ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))" }}
+              style={{
+                color:
+                  location.pathname === "/payments"
+                    ? "hsl(var(--primary))"
+                    : "hsl(var(--muted-foreground))",
+              }}
             >
               Payments
+              {location.pathname === "/payments" && (
+                <motion.div
+                  layoutId="nav-indicator"
+                  className="absolute bottom-0 left-2 right-2 h-0.5 gradient-primary rounded-full"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
             </Link>
           )}
         </div>
@@ -174,12 +211,17 @@ const Navbar = () => {
                     </div>
 
                     {notificationsQuery.isLoading && (
-                      <p className="text-sm text-muted-foreground py-3">Loading...</p>
+                      <p className="text-sm text-muted-foreground py-3">
+                        Loading...
+                      </p>
                     )}
 
-                    {!notificationsQuery.isLoading && (notificationsQuery.data?.length ?? 0) === 0 && (
-                      <p className="text-sm text-muted-foreground py-3">No notifications yet.</p>
-                    )}
+                    {!notificationsQuery.isLoading &&
+                      (notificationsQuery.data?.length ?? 0) === 0 && (
+                        <p className="text-sm text-muted-foreground py-3">
+                          No notifications yet.
+                        </p>
+                      )}
 
                     <div className="space-y-2">
                       {(notificationsQuery.data ?? []).map((notification) => (
@@ -211,7 +253,9 @@ const Navbar = () => {
                 <div className="w-6 h-6 rounded-full gradient-accent flex items-center justify-center">
                   <User className="w-3.5 h-3.5 text-foreground" />
                 </div>
-                <span className="text-sm font-medium text-foreground">{user.displayName}</span>
+                <span className="text-sm font-medium text-foreground">
+                  {user.displayName}
+                </span>
               </Link>
               <button
                 type="button"
@@ -237,7 +281,11 @@ const Navbar = () => {
             onClick={() => setMobileOpen(!mobileOpen)}
             className="md:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors"
           >
-            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {mobileOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
           </button>
         </div>
       </div>
@@ -263,6 +311,15 @@ const Navbar = () => {
                   {link.label}
                 </Link>
               ))}
+              {user && (
+                <Link
+                  to="/dashboard"
+                  onClick={() => setMobileOpen(false)}
+                  className="px-4 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                >
+                  Dashboard
+                </Link>
+              )}
               {user && (
                 <Link
                   to="/payments"

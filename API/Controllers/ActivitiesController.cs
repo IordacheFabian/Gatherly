@@ -108,6 +108,12 @@ public class ActivitiesController : BaseApiController
         return HandleResult(await Mediator.Send(new GetRecentlyViewedActivities.Query { Limit = limit }));
     }
 
+    [HttpGet("recommended")]
+    public async Task<ActionResult<List<ActivityDto>>> GetRecommendedActivities(int limit = 12)
+    {
+        return HandleResult(await Mediator.Send(new GetRecommendedActivities.Query { Limit = limit }));
+    }
+
     [HttpPost("{id}/bookings/{userId}/approve")]
     [Authorize(Policy = "IsActivityHost")]
     public async Task<ActionResult> ApproveBooking(string id, string userId)

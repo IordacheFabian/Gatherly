@@ -19,6 +19,7 @@ public class UpdateAttendance
         IUserAccessor userAccessor,
         IActivityRepository activityRepository,
         INotificationService notificationService,
+        IEmailService emailService,
         IPaymentRepository paymentRepository) : IRequestHandler<Command, Result<Unit>>
     {
         public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
@@ -29,6 +30,8 @@ public class UpdateAttendance
             if (activity == null) return Result<Unit>.Failure("Activity not found", 404);
 
             var user = await userAccessor.GetUserAsync();
+            var sendBookingConfirmationEmail = false;
+            var sendBookingCancellationEmail = false;
 
             var booking = activity.Attendees.FirstOrDefault(x => x.UserId == user.Id);
             var isHost = activity.Attendees.Any(x => x.IsHost && x.UserId == user.Id);
@@ -65,6 +68,8 @@ public class UpdateAttendance
                         Status = newStatus,
                         StatusUpdatedAt = DateTime.UtcNow,
                     });
+
+                    sendBookingConfirmationEmail = newStatus == BookingStatus.Approved;
                 }
                 else
                 {
@@ -73,6 +78,7 @@ public class UpdateAttendance
                         var wasApproved = booking.Status == BookingStatus.Approved;
                         booking.Status = BookingStatus.Cancelled;
                         booking.StatusUpdatedAt = DateTime.UtcNow;
+                        sendBookingCancellationEmail = true;
 
                         await TryRefundLatestPaymentAsync(paymentRepository, activity.Id, user.Id, cancellationToken);
 
@@ -83,8 +89,10 @@ public class UpdateAttendance
                     }
                     else
                     {
-                        booking.Status = ResolveRequestedStatus(activity);
+                        var newStatus = ResolveRequestedStatus(activity);
+                        booking.Status = newStatus;
                         booking.StatusUpdatedAt = DateTime.UtcNow;
+                        sendBookingConfirmationEmail = newStatus == BookingStatus.Approved;
                     }
                 }
             }
@@ -110,6 +118,37 @@ public class UpdateAttendance
                     .ToList();
 
                 await notificationService.NotifyManyAsync(notifications, cancellationToken);
+
+                var attendeesWithEmail = activity.Attendees
+                    .Where(x => !x.IsHost && x.User?.Email != null && x.Status != BookingStatus.Rejected && x.Status != BookingStatus.Cancelled)
+                    .ToList();
+
+                foreach (var attendee in attendeesWithEmail)
+                {
+                    await emailService.SendEmailAsync(
+                        attendee.User.Email!,
+                        $"Booking cancelled: {activity.Title}",
+                        $"Your booking for {activity.Title} was cancelled because the host cancelled the activity.",
+                        cancellationToken);
+                }
+            }
+
+            if (result && !isHost && sendBookingConfirmationEmail && !string.IsNullOrWhiteSpace(user.Email))
+            {
+                await emailService.SendEmailAsync(
+                    user.Email!,
+                    $"Booking confirmed: {activity.Title}",
+                    $"Your booking for {activity.Title} is confirmed.",
+                    cancellationToken);
+            }
+
+            if (result && !isHost && sendBookingCancellationEmail && !string.IsNullOrWhiteSpace(user.Email))
+            {
+                await emailService.SendEmailAsync(
+                    user.Email!,
+                    $"Booking cancelled: {activity.Title}",
+                    $"Your booking for {activity.Title} has been cancelled.",
+                    cancellationToken);
             }
 
             return result ? Result<Unit>.Success(Unit.Value) : Result<Unit>.Failure("Failed to update attendance", 400);

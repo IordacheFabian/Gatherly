@@ -24,6 +24,7 @@ import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import Payments from "./pages/Payments";
+import HostDashboard from "./pages/HostDashboard";
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -62,6 +63,7 @@ const App = () => (
               <Route element={<RequireAuth />}>
                 <Route path="/create" element={<CreateActivity />} />
                 <Route path="/payments" element={<Payments />} />
+                <Route path="/dashboard" element={<HostDashboard />} />
               </Route>
               <Route element={<RedirectIfAuthenticated />}>
                 <Route path="/auth" element={<Auth />} />

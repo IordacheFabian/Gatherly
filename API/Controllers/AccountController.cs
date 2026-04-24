@@ -5,10 +5,13 @@ using Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Application.Interfaces;
 
 namespace API.Controllers;
 
-public class AccountController(SignInManager<User> signInManager) : BaseApiController
+public class AccountController(
+    SignInManager<User> signInManager,
+    IEmailService emailService) : BaseApiController
 {
     [AllowAnonymous]
     [HttpPost("register")]
@@ -23,7 +26,15 @@ public class AccountController(SignInManager<User> signInManager) : BaseApiContr
 
         var result = await signInManager.UserManager.CreateAsync(user, registerDto.Password);
 
-        if (result.Succeeded) return Ok();
+        if (result.Succeeded)
+        {
+            await emailService.SendEmailAsync(
+                user.Email!,
+                "Welcome to Reactivities",
+                $"Hi {user.DisplayName}, your registration is complete. You can now start booking activities.");
+
+            return Ok();
+        }
 
         foreach (var error in result.Errors)
         {
