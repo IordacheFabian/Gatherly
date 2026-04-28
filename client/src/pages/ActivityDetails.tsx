@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -26,6 +26,7 @@ import { toast } from "@/components/ui/sonner";
 
 const ActivityDetails = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -37,7 +38,9 @@ const ActivityDetails = () => {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewBody, setReviewBody] = useState("");
   const [wishlistName, setWishlistName] = useState("");
+  const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
   const hubRef = useRef<ReturnType<typeof createCommentsHub> | null>(null);
+  const highlightedCommentTimerRef = useRef<number | null>(null);
 
   const activityQuery = useQuery({
     queryKey: ["activity", id],
@@ -51,6 +54,14 @@ const ActivityDetails = () => {
     if (!id || !user) return;
     void activitiesApi.trackView(id);
   }, [id, user]);
+
+  useEffect(() => {
+    return () => {
+      if (highlightedCommentTimerRef.current) {
+        window.clearTimeout(highlightedCommentTimerRef.current);
+      }
+    };
+  }, []);
 
   const reviewsQuery = useQuery({
     queryKey: ["activity-reviews", id],
@@ -95,6 +106,34 @@ const ActivityDetails = () => {
       void hub.stop();
     };
   }, [id, user]);
+
+  useEffect(() => {
+    const commentId = searchParams.get("commentId");
+    if (!commentId || comments.length === 0) {
+      return;
+    }
+
+    const found = comments.some((comment) => comment.id === commentId);
+    if (!found) {
+      return;
+    }
+
+    const targetElement = document.getElementById(`comment-${commentId}`);
+    if (!targetElement) {
+      return;
+    }
+
+    targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+    setHighlightedCommentId(commentId);
+
+    if (highlightedCommentTimerRef.current) {
+      window.clearTimeout(highlightedCommentTimerRef.current);
+    }
+
+    highlightedCommentTimerRef.current = window.setTimeout(() => {
+      setHighlightedCommentId((current) => (current === commentId ? null : current));
+    }, 2500);
+  }, [comments, searchParams]);
 
   const attendMutation = useMutation({
     mutationFn: () => activitiesApi.toggleAttendance(id!),
@@ -370,7 +409,11 @@ const ActivityDetails = () => {
                 </h2>
                 <div className="space-y-4">
                   {comments.map((comment) => (
-                    <div key={comment.id} className="flex gap-3 p-3 rounded-lg bg-muted/20">
+                    <div
+                      key={comment.id}
+                      id={`comment-${comment.id}`}
+                      className={`flex gap-3 p-3 rounded-lg transition-all ${highlightedCommentId === comment.id ? "bg-primary/20 ring-1 ring-primary/50" : "bg-muted/20"}`}
+                    >
                       <div className="w-8 h-8 rounded-full gradient-accent flex items-center justify-center flex-shrink-0 text-xs font-bold text-foreground overflow-hidden">
                         {comment.imageUrl ? (
                           <img

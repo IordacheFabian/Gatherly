@@ -161,6 +161,7 @@ export interface Comment {
 export type NotificationType =
   | "BookingApproved"
   | "BookingRejected"
+  | "BookingSubmitted"
   | "NewFollower"
   | "ActivityDateChanged"
   | "CommentReply"

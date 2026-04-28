@@ -5,6 +5,11 @@
 
 # dotenv files
 .env
+.env.*
+!.env.example
+
+# ASP.NET sensitive config
+appsettings.Development.json
 
 # User-specific files
 *.rsuser

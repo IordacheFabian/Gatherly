@@ -31,7 +31,10 @@ public class UpdateAttendance
 
             var user = await userAccessor.GetUserAsync();
             var sendBookingConfirmationEmail = false;
+            var sendBookingRequestEmail = false;
             var sendBookingCancellationEmail = false;
+            var notifyHostAboutBookingSubmission = false;
+            string? hostNotificationMessage = null;
 
             var booking = activity.Attendees.FirstOrDefault(x => x.UserId == user.Id);
             var isHost = activity.Attendees.Any(x => x.IsHost && x.UserId == user.Id);
@@ -70,6 +73,9 @@ public class UpdateAttendance
                     });
 
                     sendBookingConfirmationEmail = newStatus == BookingStatus.Approved;
+                    sendBookingRequestEmail = newStatus == BookingStatus.Pending; // Send request email if not immediately approved
+                    notifyHostAboutBookingSubmission = true;
+                    hostNotificationMessage = BuildHostBookingMessage(user.DisplayName, activity.Title, newStatus);
                 }
                 else
                 {
@@ -93,6 +99,8 @@ public class UpdateAttendance
                         booking.Status = newStatus;
                         booking.StatusUpdatedAt = DateTime.UtcNow;
                         sendBookingConfirmationEmail = newStatus == BookingStatus.Approved;
+                        notifyHostAboutBookingSubmission = true;
+                        hostNotificationMessage = BuildHostBookingMessage(user.DisplayName, activity.Title, newStatus);
                     }
                 }
             }
@@ -125,33 +133,94 @@ public class UpdateAttendance
 
                 foreach (var attendee in attendeesWithEmail)
                 {
-                    await emailService.SendEmailAsync(
-                        attendee.User.Email!,
-                        $"Booking cancelled: {activity.Title}",
-                        $"Your booking for {activity.Title} was cancelled because the host cancelled the activity.",
+                    await emailService.SendBookingCancelledEmailAsync(
+                        attendee.User!.Email!,
+                        attendee.User.DisplayName ?? "User",
+                        activity.Id,
+                        activity.Title,
+                        activity.Date,
+                        $"{activity.City}, {activity.Venue}",
                         cancellationToken);
                 }
             }
 
             if (result && !isHost && sendBookingConfirmationEmail && !string.IsNullOrWhiteSpace(user.Email))
             {
-                await emailService.SendEmailAsync(
+                var hostName = activity.Attendees
+                    .FirstOrDefault(x => x.IsHost)?.User?.DisplayName;
+
+                await emailService.SendActivityJoinedEmailAsync(
                     user.Email!,
-                    $"Booking confirmed: {activity.Title}",
-                    $"Your booking for {activity.Title} is confirmed.",
+                    user.DisplayName ?? "User",
+                    activity.Id,
+                    activity.Title,
+                    activity.Date,
+                    $"{activity.City}, {activity.Venue}",
+                    hostName,
+                    cancellationToken);
+            }
+
+            if (result && !isHost && sendBookingRequestEmail && !string.IsNullOrWhiteSpace(user.Email))
+            {
+                var hostName = activity.Attendees
+                    .FirstOrDefault(x => x.IsHost)?.User?.DisplayName;
+
+                await emailService.SendBookingRequestEmailAsync(
+                    user.Email!,
+                    user.DisplayName ?? "User",
+                    activity.Id,
+                    activity.Title,
+                    activity.Date,
+                    $"{activity.City}, {activity.Venue}",
+                    hostName,
                     cancellationToken);
             }
 
             if (result && !isHost && sendBookingCancellationEmail && !string.IsNullOrWhiteSpace(user.Email))
             {
-                await emailService.SendEmailAsync(
+                await emailService.SendBookingCancelledEmailAsync(
                     user.Email!,
-                    $"Booking cancelled: {activity.Title}",
-                    $"Your booking for {activity.Title} has been cancelled.",
+                    user.DisplayName ?? "User",
+                    activity.Id,
+                    activity.Title,
+                    activity.Date,
+                    $"{activity.City}, {activity.Venue}",
                     cancellationToken);
             }
 
+            if (result && !isHost && notifyHostAboutBookingSubmission && !string.IsNullOrWhiteSpace(hostNotificationMessage))
+            {
+                var hostUserId = activity.Attendees.FirstOrDefault(x => x.IsHost)?.UserId;
+                if (!string.IsNullOrWhiteSpace(hostUserId))
+                {
+                    await notificationService.NotifyAsync(new Notification
+                    {
+                        RecipientUserId = hostUserId,
+                        ActorUserId = user.Id,
+                        ActivityId = activity.Id,
+                        Type = NotificationType.BookingSubmitted,
+                        Message = hostNotificationMessage,
+                    }, cancellationToken);
+                }
+            }
+
             return result ? Result<Unit>.Success(Unit.Value) : Result<Unit>.Failure("Failed to update attendance", 400);
+        }
+
+        private static string BuildHostBookingMessage(string? displayName, string activityTitle, BookingStatus status)
+        {
+            var name = string.IsNullOrWhiteSpace(displayName) ? "Someone" : displayName;
+            if (status == BookingStatus.Approved)
+            {
+                return $"{name} booked a spot in {activityTitle}";
+            }
+
+            if (status == BookingStatus.Waitlisted)
+            {
+                return $"{name} requested a booking for {activityTitle} and is now waitlisted";
+            }
+
+            return $"{name} requested a booking for {activityTitle}";
         }
 
         private static async Task TryRefundLatestPaymentAsync(

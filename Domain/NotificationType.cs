@@ -9,4 +9,5 @@ public enum NotificationType
     CommentReply = 4,
     ActivityCancelled = 5,
     ActivityReminder = 6,
+    BookingSubmitted = 7,
 }

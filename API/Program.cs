@@ -18,6 +18,13 @@ using Application.Interfaces.IRepository;
 using Persistence.Repositories;
 using System.Text.Json.Serialization;
 using API.Services;
+using DotNetEnv;
+
+// Load .env file before configuration is built (Development only)
+if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), ".env")))
+{
+    Env.Load();
+}
 
 var builder = WebApplication.CreateBuilder(args);
 

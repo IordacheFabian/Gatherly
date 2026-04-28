@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Activity,
+  Check,
   Bookmark,
   Camera,
   Edit,
@@ -11,6 +12,8 @@ import {
   Star,
   Image as ImageIcon,
   User,
+  Clock3,
+  X,
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -22,13 +25,14 @@ import PageTransition from "@/components/PageTransition";
 import { activitiesApi, profilesApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 
-type TabKey = "photos" | "details" | "activities" | "collections" | "followers" | "followings" | "reviews";
+type TabKey = "photos" | "details" | "activities" | "approvals" | "collections" | "followers" | "followings" | "reviews";
 type ActivityPredicate = "future" | "past" | "hosting";
 
 const tabs: Array<{ id: TabKey; label: string; icon: typeof ImageIcon }> = [
   { id: "photos", label: "Photos", icon: ImageIcon },
   { id: "details", label: "Profile Details", icon: User },
   { id: "activities", label: "Activities", icon: Activity },
+  { id: "approvals", label: "Pending Approvals", icon: Clock3 },
   { id: "collections", label: "Saved & Wishlists", icon: Bookmark },
   { id: "reviews", label: "Host Reviews", icon: Star },
   { id: "followers", label: "Followers", icon: Users },
@@ -76,6 +80,12 @@ const Profile = () => {
     queryKey: ["profile-activities", targetUserId, activityPredicate],
     queryFn: () => profilesApi.getActivities(targetUserId!, activityPredicate),
     enabled: Boolean(targetUserId) && activeTab === "activities",
+  });
+
+  const pendingApprovalsQuery = useQuery({
+    queryKey: ["profile-hosting-approvals", targetUserId],
+    queryFn: () => profilesApi.getActivities(targetUserId!, "hosting"),
+    enabled: Boolean(targetUserId) && isOwnProfile && activeTab === "approvals",
   });
 
   const hostReviewsQuery = useQuery({
@@ -145,15 +155,52 @@ const Profile = () => {
     },
   });
 
+  const approveBookingMutation = useMutation({
+    mutationFn: ({ activityId, userId }: { activityId: string; userId: string }) =>
+      activitiesApi.approveBooking(activityId, userId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["profile-hosting-approvals", targetUserId] });
+      await queryClient.invalidateQueries({ queryKey: ["profile-activities", targetUserId, "hosting"] });
+      await queryClient.invalidateQueries({ queryKey: ["activity"] });
+      await queryClient.invalidateQueries({ queryKey: ["activities"] });
+    },
+  });
+
+  const rejectBookingMutation = useMutation({
+    mutationFn: ({ activityId, userId }: { activityId: string; userId: string }) =>
+      activitiesApi.rejectBooking(activityId, userId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["profile-hosting-approvals", targetUserId] });
+      await queryClient.invalidateQueries({ queryKey: ["profile-activities", targetUserId, "hosting"] });
+      await queryClient.invalidateQueries({ queryKey: ["activity"] });
+      await queryClient.invalidateQueries({ queryKey: ["activities"] });
+    },
+  });
+
   const profile = profileQuery.data;
   const photos = photosQuery.data ?? [];
   const followEntries =
     activeTab === "followers" ? followersQuery.data ?? [] : followingsQuery.data ?? [];
   const profileActivities = activitiesQuery.data ?? [];
+  const hostActivitiesForApprovals = pendingApprovalsQuery.data ?? [];
   const hostReviews = hostReviewsQuery.data ?? [];
   const savedActivities = collectionsSavedQuery.data ?? [];
   const wishlists = wishlistsQuery.data ?? [];
   const recentActivities = recentActivitiesQuery.data ?? [];
+  const pendingApprovals = hostActivitiesForApprovals.flatMap((activity) =>
+    activity.bookings
+      .filter((booking) => !booking.isHost && (booking.status === "Pending" || booking.status === "Waitlisted"))
+      .map((booking) => ({
+        activityId: activity.id,
+        activityTitle: activity.title,
+        activityDate: activity.date,
+        attendeeId: booking.user.id,
+        attendeeName: booking.user.displayName,
+        attendeeImage: booking.user.imageUrl,
+        status: booking.status,
+        dateJoined: booking.dateJoined,
+      })),
+  );
 
   const initials = useMemo(() => {
     const name = profile?.displayName ?? "User";
@@ -275,7 +322,10 @@ const Profile = () => {
           </motion.div>
 
           <div className="flex gap-1 mb-8 overflow-x-auto pb-2">
-            {tabs.filter((tab) => tab.id !== "collections" || isOwnProfile).map((tab) => (
+            {tabs
+              .filter((tab) => tab.id !== "collections" || isOwnProfile)
+              .filter((tab) => tab.id !== "approvals" || isOwnProfile)
+              .map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -418,6 +468,75 @@ const Profile = () => {
                   </div>
                 ) : (
                   <p className="text-muted-foreground">No activities found for this view.</p>
+                )}
+              </motion.div>
+            )}
+
+            {activeTab === "approvals" && (
+              <motion.div
+                key="approvals"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="space-y-4"
+              >
+                <h2 className="font-display font-semibold text-lg">Clients Waiting for Approval</h2>
+
+                {pendingApprovalsQuery.isLoading ? (
+                  <p className="text-muted-foreground">Loading pending approvals...</p>
+                ) : pendingApprovals.length > 0 ? (
+                  <div className="space-y-3">
+                    {pendingApprovals.map((item) => (
+                      <div key={`${item.activityId}-${item.attendeeId}`} className="glass rounded-xl p-4">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                          <div>
+                            <Link to={`/activity/${item.activityId}`} className="font-medium text-primary hover:underline">
+                              {item.activityTitle}
+                            </Link>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(item.activityDate).toLocaleString()} • {item.status}
+                            </p>
+                            <div className="mt-2 flex items-center gap-2 text-sm">
+                              <div className="w-7 h-7 rounded-full gradient-primary flex items-center justify-center text-xs font-bold text-primary-foreground overflow-hidden">
+                                {item.attendeeImage ? (
+                                  <img src={item.attendeeImage} alt={item.attendeeName} className="w-full h-full object-cover" />
+                                ) : (
+                                  item.attendeeName
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")
+                                    .slice(0, 2)
+                                )}
+                              </div>
+                              <span>{item.attendeeName}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              className="gradient-primary text-primary-foreground border-0"
+                              onClick={() => approveBookingMutation.mutate({ activityId: item.activityId, userId: item.attendeeId })}
+                              disabled={approveBookingMutation.isPending || rejectBookingMutation.isPending}
+                            >
+                              <Check className="mr-1 h-4 w-4" /> Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-destructive/40 text-destructive hover:bg-destructive/10"
+                              onClick={() => rejectBookingMutation.mutate({ activityId: item.activityId, userId: item.attendeeId })}
+                              disabled={approveBookingMutation.isPending || rejectBookingMutation.isPending}
+                            >
+                              <X className="mr-1 h-4 w-4" /> Reject
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">No pending or waitlisted booking requests right now.</p>
                 )}
               </motion.div>
             )}

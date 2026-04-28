@@ -18,7 +18,9 @@ public class SimulateCheckout
     public class Handler(
         IUserAccessor userAccessor,
         IActivityRepository activityRepository,
-        IPaymentRepository paymentRepository) : IRequestHandler<Command, Result<CheckoutSessionDto>>
+        IPaymentRepository paymentRepository,
+        INotificationService notificationService,
+        IEmailService emailService) : IRequestHandler<Command, Result<CheckoutSessionDto>>
     {
         public async Task<Result<CheckoutSessionDto>> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -86,28 +88,61 @@ public class SimulateCheckout
             };
 
             await paymentRepository.AddAsync(payment, cancellationToken);
+            BookingStatus? hostNotificationStatus = null;
 
             if (existingBooking == null)
             {
+                var newStatus = ResolveRequestedStatus(activity);
                 activity.Attendees.Add(new ActivityAttendee
                 {
                     UserId = user.Id,
                     ActivityId = activity.Id,
                     IsHost = false,
-                    Status = ResolveRequestedStatus(activity),
+                    Status = newStatus,
                     StatusUpdatedAt = DateTime.UtcNow,
                 });
+                hostNotificationStatus = newStatus;
             }
             else
             {
-                existingBooking.Status = ResolveRequestedStatus(activity);
+                var newStatus = ResolveRequestedStatus(activity);
+                existingBooking.Status = newStatus;
                 existingBooking.StatusUpdatedAt = DateTime.UtcNow;
+                hostNotificationStatus = newStatus;
             }
 
             var saved = await paymentRepository.SaveChangesAsync(cancellationToken) > 0;
             if (!saved)
             {
                 return Result<CheckoutSessionDto>.Failure("Failed to complete mock checkout", 400);
+            }
+
+            // Send payment success email
+            if (!string.IsNullOrWhiteSpace(user.Email))
+            {
+                var hostName = activity.Attendees.FirstOrDefault(x => x.IsHost)?.User?.DisplayName;
+                await emailService.SendPaymentSuccessfulEmailAsync(
+                    user.Email,
+                    user.DisplayName ?? "User",
+                    payment.Id,
+                    activity.Id,
+                    activity.Title,
+                    activity.Date,
+                    $"{activity.City}, {activity.Venue}",
+                    hostName,
+                    payment.Amount,
+                    payment.Currency,
+                    cancellationToken);
+            }
+
+            if (hostNotificationStatus.HasValue)
+            {
+                await NotifyHostBookingSubmissionAsync(
+                    notificationService,
+                    activity,
+                    user,
+                    hostNotificationStatus.Value,
+                    cancellationToken);
             }
 
             return Result<CheckoutSessionDto>.Success(new CheckoutSessionDto
@@ -140,6 +175,36 @@ public class SimulateCheckout
         private static string BuildReceiptNumber()
         {
             return $"RCPT-{DateTime.UtcNow:yyyyMMddHHmmss}-{Random.Shared.Next(1000, 9999)}";
+        }
+
+        private static async Task NotifyHostBookingSubmissionAsync(
+            INotificationService notificationService,
+            Activity activity,
+            User user,
+            BookingStatus status,
+            CancellationToken cancellationToken)
+        {
+            var hostUserId = activity.Attendees.FirstOrDefault(x => x.IsHost)?.UserId;
+            if (string.IsNullOrWhiteSpace(hostUserId))
+            {
+                return;
+            }
+
+            var actorName = string.IsNullOrWhiteSpace(user.DisplayName) ? "Someone" : user.DisplayName;
+            var message = status == BookingStatus.Approved
+                ? $"{actorName} booked a spot in {activity.Title}"
+                : status == BookingStatus.Waitlisted
+                    ? $"{actorName} requested a booking for {activity.Title} and is now waitlisted"
+                    : $"{actorName} requested a booking for {activity.Title}";
+
+            await notificationService.NotifyAsync(new Notification
+            {
+                RecipientUserId = hostUserId,
+                ActorUserId = user.Id,
+                ActivityId = activity.Id,
+                Type = NotificationType.BookingSubmitted,
+                Message = message,
+            }, cancellationToken);
         }
     }
 }

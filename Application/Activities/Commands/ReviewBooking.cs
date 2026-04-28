@@ -19,7 +19,8 @@ public class ReviewBooking
     public class Handler(
         IActivityRepository activityRepository,
         INotificationService notificationService,
-        IPaymentRepository paymentRepository) : IRequestHandler<Command, Result<Unit>>
+        IPaymentRepository paymentRepository,
+        IEmailService emailService) : IRequestHandler<Command, Result<Unit>>
     {
         public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -87,6 +88,28 @@ public class ReviewBooking
                         ? $"Your booking for {activity.Title} was approved"
                         : $"Your booking for {activity.Title} was rejected",
                 }, cancellationToken);
+
+                // Send approval/rejection emails
+                if (booking.User?.Email != null)
+                {
+                    if (request.TargetStatus == BookingStatus.Approved)
+                    {
+                        var hostName = activity.Attendees
+                            .FirstOrDefault(x => x.IsHost)?.User?.DisplayName;
+
+                        await emailService.SendBookingApprovedEmailAsync(
+                            booking.User.Email,
+                            booking.User.DisplayName ?? "User",
+                            activity.Id,
+                            activity.Title,
+                            activity.Date,
+                            $"{activity.City}, {activity.Venue}",
+                            hostName,
+                            activity.PriceAmount > 0 ? activity.PriceAmount : null,
+                            activity.Currency,
+                            cancellationToken);
+                    }
+                }
             }
 
             return Result<Unit>.Success(Unit.Value);

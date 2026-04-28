@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Menu, X, Compass, LogOut, Bell } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -19,6 +19,7 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const queryClient = useQueryClient();
   const hubRef = useRef<ReturnType<typeof createNotificationsHub> | null>(null);
@@ -89,6 +90,38 @@ const Navbar = () => {
 
     hasShownEntryUnreadToastRef.current = true;
   }, [notificationsQuery.isLoading, unreadCount, user]);
+
+  const resolveNotificationTarget = (notification: Notification): string | null => {
+    switch (notification.type) {
+      case "CommentReply":
+        if (notification.activityId && notification.commentId) {
+          return `/activity/${notification.activityId}?commentId=${encodeURIComponent(notification.commentId)}`;
+        }
+
+        return notification.activityId ? `/activity/${notification.activityId}` : null;
+      case "BookingApproved":
+      case "BookingRejected":
+      case "BookingSubmitted":
+      case "ActivityDateChanged":
+      case "ActivityCancelled":
+      case "ActivityReminder":
+        return notification.activityId ? `/activity/${notification.activityId}` : null;
+      default:
+        return null;
+    }
+  };
+
+  const onNotificationClick = (notification: Notification) => {
+    if (!notification.isRead) {
+      markReadMutation.mutate(notification.id);
+    }
+
+    const target = resolveNotificationTarget(notification);
+    if (target) {
+      setNotificationsOpen(false);
+      navigate(target);
+    }
+  };
 
   return (
     <motion.nav
@@ -229,11 +262,7 @@ const Navbar = () => {
                           key={notification.id}
                           type="button"
                           className={`w-full text-left rounded-lg border p-3 transition-colors ${notification.isRead ? "border-glass-border bg-muted/15" : "border-primary/40 bg-primary/10"}`}
-                          onClick={() => {
-                            if (!notification.isRead) {
-                              markReadMutation.mutate(notification.id);
-                            }
-                          }}
+                          onClick={() => onNotificationClick(notification)}
                         >
                           <p className="text-sm">{notification.message}</p>
                           <p className="text-xs text-muted-foreground mt-1">
