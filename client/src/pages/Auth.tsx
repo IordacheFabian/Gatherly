@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MailCheck } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,8 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [registered, setRegistered] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
 
   const { login, register } = useAuth();
   const navigate = useNavigate();
@@ -30,17 +32,57 @@ const Auth = () => {
     try {
       if (mode === "login") {
         await login({ email, password });
+        const redirectTo = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? "/";
+        navigate(redirectTo, { replace: true });
       } else {
         await register({ displayName, email, password });
+        setRegisteredEmail(email);
+        setRegistered(true);
       }
-      const redirectTo = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? "/";
-      navigate(redirectTo, { replace: true });
     } catch (e) {
       setError(getErrorMessage(e, "Authentication failed"));
     } finally {
       setSubmitting(false);
     }
   };
+
+  if (registered) {
+    return (
+      <PageTransition>
+        <div className="pt-24 pb-20 container mx-auto px-6 max-w-xl">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass p-10 rounded-2xl text-center"
+          >
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-5">
+              <MailCheck className="w-9 h-9 text-primary" />
+            </div>
+            <h1 className="text-2xl font-display font-bold mb-2">Check your inbox!</h1>
+            <p className="text-muted-foreground mb-2">
+              We've sent a confirmation email to
+            </p>
+            <p className="font-semibold text-foreground mb-6">{registeredEmail}</p>
+            <p className="text-sm text-muted-foreground mb-8">
+              Click the link in the email to activate your account. After confirming, you'll be
+              able to log in.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRegistered(false);
+                setMode("login");
+                setEmail(registeredEmail);
+                setPassword("");
+              }}
+            >
+              Go to login
+            </Button>
+          </motion.div>
+        </div>
+      </PageTransition>
+    );
+  }
 
   return (
     <PageTransition>

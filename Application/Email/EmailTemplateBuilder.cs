@@ -42,6 +42,43 @@ public class EmailTemplateBuilder
     }
 
     /// <summary>
+    /// Builds an email confirmation email for new user registration
+    /// </summary>
+    public string BuildEmailConfirmationEmail(string displayName, string confirmationUrl)
+    {
+        var header = $@"
+<div class=""email-header"" style=""background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"">
+    <div style=""font-size: 48px; margin-bottom: 10px;"">✉️</div>
+    <h1 style=""margin: 0 0 8px 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;"">Reactivities</h1>
+    <p class=""tagline"">One step away from the community 🎉</p>
+</div>";
+
+        var content = $@"
+<p class=""greeting"">Hi <strong>{displayName}</strong>,</p>
+
+<p class=""content"">Welcome aboard! We're thrilled to have you join <strong>Reactivities</strong> — the place to discover and create amazing activities with people around you.</p>
+
+<div style=""background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%); border: 1px solid #e0e7ff; border-radius: 12px; padding: 28px; margin: 24px 0; text-align: center;"">
+    <div style=""font-size: 36px; margin-bottom: 12px;"">🔐</div>
+    <h3 style=""margin: 0 0 8px 0; color: #4338ca; font-size: 18px;"">Confirm your email address</h3>
+    <p style=""margin: 0; color: #6b7280; font-size: 14px; line-height: 1.6;"">
+        Click the button below to verify your email and activate your account.<br>
+        This link will expire in <strong>24 hours</strong>.
+    </p>
+</div>
+
+<p class=""content"" style=""font-size: 13px; color: #9ca3af; text-align: center;"">
+    If you didn't create this account, you can safely ignore this email.
+</p>";
+
+        return BuildEmail(
+            header: header,
+            content: content,
+            mainCta: ("✓ Confirm My Email", confirmationUrl)
+        );
+    }
+
+    /// <summary>
     /// Builds a generic email without activity details
     /// </summary>
     public string BuildGenericEmail(GenericEmailData data, string ctaButtonText, string ctaButtonUrl, string? secondaryCtaText = null, string? secondaryCtaUrl = null)

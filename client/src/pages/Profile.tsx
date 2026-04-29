@@ -22,8 +22,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import ActivityCard from "@/components/ActivityCard";
 import PageTransition from "@/components/PageTransition";
-import { activitiesApi, profilesApi } from "@/lib/api";
+import { accountApi, activitiesApi, profilesApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { useNavigate } from "react-router-dom";
+import { getErrorMessage } from "@/lib/error-utils";
 
 type TabKey = "photos" | "details" | "activities" | "approvals" | "collections" | "followers" | "followings" | "reviews";
 type ActivityPredicate = "future" | "past" | "hosting";
@@ -40,8 +42,9 @@ const tabs: Array<{ id: TabKey; label: string; icon: typeof ImageIcon }> = [
 ];
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { userId } = useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const targetUserId = userId ?? user?.id;
@@ -51,6 +54,8 @@ const Profile = () => {
   const [activityPredicate, setActivityPredicate] = useState<ActivityPredicate>("future");
   const [displayNameDraft, setDisplayNameDraft] = useState("");
   const [bioDraft, setBioDraft] = useState("");
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const profileQuery = useQuery({
     queryKey: ["profile", targetUserId],
@@ -152,6 +157,20 @@ const Profile = () => {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["profile", targetUserId] });
       await queryClient.invalidateQueries({ queryKey: ["profile-photos", targetUserId] });
+    },
+  });
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: () => accountApi.deleteAccount(deletePassword),
+    onSuccess: async () => {
+      setDeleteError(null);
+      setDeletePassword("");
+      await logout().catch(() => undefined);
+      queryClient.clear();
+      navigate("/", { replace: true });
+    },
+    onError: (error) => {
+      setDeleteError(getErrorMessage(error, "Unable to delete account."));
     },
   });
 
@@ -417,13 +436,47 @@ const Profile = () => {
                     />
                   </div>
                   {isOwnProfile && (
-                    <Button
-                      className="gradient-primary text-primary-foreground border-0"
-                      onClick={() => editMutation.mutate()}
-                      disabled={editMutation.isPending}
-                    >
-                      <Edit className="w-4 h-4 mr-1" /> Save Changes
-                    </Button>
+                    <>
+                      <Button
+                        className="gradient-primary text-primary-foreground border-0"
+                        onClick={() => editMutation.mutate()}
+                        disabled={editMutation.isPending}
+                      >
+                        <Edit className="w-4 h-4 mr-1" /> Save Changes
+                      </Button>
+
+                      <div className="border border-destructive/30 rounded-xl p-4 bg-destructive/5 space-y-3">
+                        <p className="font-semibold text-destructive">Delete Account</p>
+                        <p className="text-sm text-muted-foreground">
+                          Enter your password to permanently delete your account. You will receive a goodbye email confirmation.
+                        </p>
+                        <Input
+                          type="password"
+                          value={deletePassword}
+                          onChange={(e) => setDeletePassword(e.target.value)}
+                          placeholder="Enter password to confirm"
+                          className="bg-muted/30 border-glass-border"
+                        />
+                        {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
+                        <Button
+                          variant="destructive"
+                          onClick={() => {
+                            const confirmed = window.confirm(
+                              "Are you sure you want to permanently delete your account? This action cannot be undone.",
+                            );
+
+                            if (confirmed) {
+                              setDeleteError(null);
+                              deleteAccountMutation.mutate();
+                            }
+                          }}
+                          disabled={deleteAccountMutation.isPending || deletePassword.trim().length === 0}
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          {deleteAccountMutation.isPending ? "Deleting account..." : "Delete Account"}
+                        </Button>
+                      </div>
+                    </>
                   )}
                 </div>
               </motion.div>

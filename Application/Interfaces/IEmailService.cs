@@ -63,6 +63,16 @@ public interface IEmailService
         string? checkoutUrl,
         CancellationToken cancellationToken = default);
 
+    // Rejection email
+    Task SendBookingRejectedEmailAsync(
+        string userEmail,
+        string userName,
+        string activityId,
+        string activityTitle,
+        DateTime activityDate,
+        string location,
+        CancellationToken cancellationToken = default);
+
     // Cancellation email
     Task SendBookingCancelledEmailAsync(
         string userEmail,

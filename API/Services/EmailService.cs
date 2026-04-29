@@ -274,6 +274,39 @@ public class EmailService(
         await SendEmailAsync(userEmail, "Payment Required - Reactivities", htmlBody, cancellationToken);
     }
 
+    public async Task SendBookingRejectedEmailAsync(
+        string userEmail,
+        string userName,
+        string activityId,
+        string activityTitle,
+        DateTime activityDate,
+        string location,
+        CancellationToken cancellationToken = default)
+    {
+        var data = new ActivityEmailData
+        {
+            RecipientName = userName,
+            RecipientEmail = userEmail,
+            ActivityId = activityId,
+            ActivityTitle = activityTitle,
+            ActivityDate = activityDate,
+            ActivityLocation = location,
+            StatusBadge = "Rejected",
+            StatusBadgeColor = "#ef4444",
+            Message = $"Unfortunately, your booking request for '{activityTitle}' has been rejected by the host.",
+            SecondaryMessage = "You can browse other activities or contact the host if you have any questions."
+        };
+
+        var htmlBody = _templateBuilder.BuildActivityEmail(
+            data,
+            "Browse Other Activities",
+            "/activities",
+            "Contact Support",
+            "/contact");
+
+        await SendEmailAsync(userEmail, "Booking Request Rejected - Reactivities", htmlBody, cancellationToken);
+    }
+
     public async Task SendBookingCancelledEmailAsync(
         string userEmail,
         string userName,

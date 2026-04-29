@@ -1,6 +1,6 @@
 using System;
-using System.Drawing;
 using API.DTOs;
+using Application.Email;
 using Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -29,48 +29,26 @@ public class AccountController(
 
         if (result.Succeeded)
         {
-            // Generate email confirmation token
             var token = await signInManager.UserManager.GenerateEmailConfirmationTokenAsync(user);
-            var confirmationLink = $"{configuration["AppUrl"]}/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
+            var clientBaseUrl = configuration["AppSettings:ClientBaseUrl"] ?? configuration["AppUrl"] ?? "http://localhost:5173";
+            var confirmationUrl = $"{clientBaseUrl.TrimEnd('/')}/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
 
-            // Create HTML email body
-            var htmlBody = $@"
-                <html>
-                    <body style='font-family: Arial, sans-serif;'>
-                        <div style='max-width: 600px; margin: 0 auto;'>
-                            <h2>Welcome to Reactivities, {user.DisplayName}!</h2>
-                            <p>Thank you for registering. Please confirm your email address to activate your account.</p>
-                            <p>
-                                <a href='{confirmationLink}' style='background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;'>
-                                    Confirm Email Address
-                                </a>
-                            </p>
-                            <p>Or copy and paste this link in your browser:</p>
-                            <p><a href='{confirmationLink}'>{confirmationLink}</a></p>
-                            <p>If you didn't create this account, you can ignore this email.</p>
-                            <p style='color: #666; margin-top: 30px; border-top: 1px solid #ddd; padding-top: 10px;'>
-                                Best regards,<br>
-                                The Reactivities Team
-                            </p>
-                        </div>
-                    </body>
-                </html>";
+            var templateBuilder = new EmailTemplateBuilder(clientBaseUrl);
+            var htmlBody = templateBuilder.BuildEmailConfirmationEmail(user.DisplayName, confirmationUrl);
 
             try
             {
                 await emailService.SendEmailAsync(
                     user.Email!,
-                    "Confirm Your Email - Reactivities",
+                    "Confirm Your Email – Welcome to Reactivities!",
                     htmlBody);
             }
             catch (Exception ex)
             {
-                // Log email error but don't fail registration
-                // User will need to request password reset or resend email
                 Console.WriteLine($"Email sending failed: {ex.Message}");
             }
 
-            return Ok(new { message = "Registration successful. Please check your email to confirm your account.", userId = user.Id });
+            return Ok(new { message = "Registration successful. Please check your email to confirm your account." });
         }
 
         foreach (var error in result.Errors)
@@ -82,27 +60,41 @@ public class AccountController(
     }
 
     [AllowAnonymous]
-    [HttpPost("confirm-email")]
-    public async Task<ActionResult> ConfirmEmail(string userId, string token)
+    [HttpPost("login")]
+    public async Task<ActionResult> Login([FromBody] LoginDto loginDto)
     {
-        if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(token))
-        {
-            return BadRequest("UserId and token are required.");
-        }
+        var user = await signInManager.UserManager.FindByEmailAsync(loginDto.Email);
 
-        var user = await signInManager.UserManager.FindByIdAsync(userId);
         if (user == null)
-        {
-            return NotFound("User not found.");
-        }
+            return Unauthorized("Invalid email or password.");
 
-        var result = await signInManager.UserManager.ConfirmEmailAsync(user, token);
+        if (!user.EmailConfirmed)
+            return Unauthorized("Please confirm your email address before logging in. Check your inbox for the confirmation email.");
+
+        var result = await signInManager.PasswordSignInAsync(user, loginDto.Password, isPersistent: true, lockoutOnFailure: false);
+
         if (result.Succeeded)
-        {
-            return Ok(new { message = "Email confirmed successfully. You can now log in." });
-        }
+            return Ok();
 
-        return BadRequest("Email confirmation failed. The token may be invalid or expired.");
+        return Unauthorized("Invalid email or password.");
+    }
+
+    [AllowAnonymous]
+    [HttpPost("confirm-email")]
+    public async Task<ActionResult> ConfirmEmail([FromBody] ConfirmEmailDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.UserId) || string.IsNullOrWhiteSpace(dto.Token))
+            return BadRequest("UserId and token are required.");
+
+        var user = await signInManager.UserManager.FindByIdAsync(dto.UserId);
+        if (user == null)
+            return NotFound("User not found.");
+
+        var result = await signInManager.UserManager.ConfirmEmailAsync(user, dto.Token);
+        if (result.Succeeded)
+            return Ok(new { message = "Email confirmed successfully. You can now log in." });
+
+        return BadRequest("Email confirmation failed. The link may be invalid or expired.");
     }
 
     [AllowAnonymous]
@@ -125,6 +117,68 @@ public class AccountController(
             user.EmailConfirmed
         });
     }
+
+        [HttpPost("delete-account")]
+        public async Task<ActionResult> DeleteAccount([FromBody] DeleteAccountDto dto)
+        {
+                if (string.IsNullOrWhiteSpace(dto.Password))
+                        return BadRequest("Password is required.");
+
+                var user = await signInManager.UserManager.GetUserAsync(User);
+                if (user == null)
+                        return Unauthorized();
+
+                var isPasswordValid = await signInManager.UserManager.CheckPasswordAsync(user, dto.Password);
+                if (!isPasswordValid)
+                        return BadRequest("Invalid password.");
+
+                var email = user.Email;
+                var displayName = user.DisplayName;
+
+                var goodbyeEmailHtml = $@"
+<html>
+    <body style='font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px;'>
+        <div style='max-width: 600px; margin: 0 auto; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,0.08);'>
+            <div style='background: linear-gradient(135deg, #ef4444 0%, #f97316 100%); color: white; text-align: center; padding: 28px 20px;'>
+                <h2 style='margin: 0;'>Reactivities</h2>
+            </div>
+            <div style='padding: 28px;'>
+                <p style='margin-top: 0;'>Goodbye, dear <strong>{displayName}</strong>,</p>
+                <p>We're sorry to see you leave. Your account has been deleted as requested.</p>
+                <p>We hope we will see again soon.</p>
+                <p style='color: #6b7280; font-size: 13px; margin-top: 24px;'>
+                    If this wasn't you, please contact support immediately.
+                </p>
+            </div>
+        </div>
+    </body>
+</html>";
+
+                try
+                {
+                        if (!string.IsNullOrWhiteSpace(email))
+                        {
+                                await emailService.SendEmailAsync(email, "Goodbye from Reactivities", goodbyeEmailHtml);
+                        }
+                }
+                catch (Exception ex)
+                {
+                        Console.WriteLine($"Goodbye email sending failed: {ex.Message}");
+                }
+
+                await signInManager.SignOutAsync();
+                var result = await signInManager.UserManager.DeleteAsync(user);
+
+                if (result.Succeeded)
+                        return Ok(new { message = "Your account has been deleted." });
+
+                foreach (var error in result.Errors)
+                {
+                        ModelState.AddModelError(error.Code, error.Description);
+                }
+
+                return ValidationProblem();
+        }
 
     [HttpPost("logout")]
     public async Task<ActionResult> Logout()

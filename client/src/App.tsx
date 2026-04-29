@@ -25,6 +25,7 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import Payments from "./pages/Payments";
 import HostDashboard from "./pages/HostDashboard";
+import ConfirmEmail from "./pages/ConfirmEmail";
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -70,6 +71,7 @@ const App = () => (
               </Route>
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/confirm-email" element={<ConfirmEmail />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AnimatePresence>

@@ -53,10 +53,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = useCallback(
     async (form: RegisterForm) => {
       await accountApi.register(form);
-      await accountApi.login({ email: form.email, password: form.password });
-      await refreshUser();
+      // Don't auto-login — user must confirm email first
     },
-    [refreshUser],
+    [],
   );
 
   const logout = useCallback(async () => {

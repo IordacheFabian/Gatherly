@@ -76,9 +76,19 @@ export const accountApi = {
       body: JSON.stringify(data),
     }),
   login: (data: LoginForm) =>
-    request<void>("/api/login?useCookies=true", {
+    request<void>("/api/account/login", {
       method: "POST",
       body: JSON.stringify(data),
+    }),
+  confirmEmail: (userId: string, token: string) =>
+    request<{ message: string }>("/api/account/confirm-email", {
+      method: "POST",
+      body: JSON.stringify({ userId, token }),
+    }),
+  deleteAccount: (password: string) =>
+    request<{ message: string }>("/api/account/delete-account", {
+      method: "POST",
+      body: JSON.stringify({ password }),
     }),
   logout: () =>
     request<void>("/api/account/logout", {

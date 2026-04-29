@@ -109,6 +109,17 @@ public class ReviewBooking
                             activity.Currency,
                             cancellationToken);
                     }
+                    else
+                    {
+                        await emailService.SendBookingRejectedEmailAsync(
+                            booking.User.Email,
+                            booking.User.DisplayName ?? "User",
+                            activity.Id,
+                            activity.Title,
+                            activity.Date,
+                            $"{activity.City}, {activity.Venue}",
+                            cancellationToken);
+                    }
                 }
             }
 
