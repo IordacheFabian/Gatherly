@@ -1,55 +1,20 @@
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Download } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
-import { paymentsApi } from "@/lib/api";
-import { toast } from "@/components/ui/sonner";
+import { usePaymentHistory } from "@/hooks/usePaymentHistory";
 
 const Payments = () => {
-  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
-  const [downloadingId, setDownloadingId] = useState<string | null>(null);
-
-  const handleDownloadPdf = async (paymentId: string) => {
-    try {
-      setDownloadingId(paymentId);
-      const { blob, fileName } = await paymentsApi.downloadReceiptPdf(paymentId);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      toast.success("Receipt downloaded");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to download receipt");
-    } finally {
-      setDownloadingId(null);
-    }
-  };
-
-  const historyQuery = useQuery({
-    queryKey: ["payments", "history"],
-    queryFn: () => paymentsApi.history(100),
-  });
-
-  const receiptQuery = useQuery({
-    queryKey: ["payments", "receipt", selectedPaymentId],
-    queryFn: () => paymentsApi.receipt(selectedPaymentId!),
-    enabled: Boolean(selectedPaymentId),
-  });
-
-  const rows = historyQuery.data ?? [];
-
-  const totals = useMemo(() => {
-    const paid = rows.filter((x) => x.status === "Succeeded").reduce((acc, item) => acc + item.amount, 0);
-    const refunded = rows.filter((x) => x.status === "Refunded").reduce((acc, item) => acc + item.amount, 0);
-    return { paid, refunded };
-  }, [rows]);
+  const {
+    historyQuery,
+    receiptQuery,
+    rows,
+    totals,
+    setSelectedPaymentId,
+    downloadingId,
+    downloadReceiptPdf,
+  } = usePaymentHistory(100);
 
   return (
     <PageTransition>
@@ -107,16 +72,12 @@ const Payments = () => {
                     <td className="py-3">{new Date(item.createdAt).toLocaleString()}</td>
                     <td className="py-3">
                       <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setSelectedPaymentId(item.id)}
-                        >
+                        <Button size="sm" variant="outline" onClick={() => setSelectedPaymentId(item.id)}>
                           View receipt
                         </Button>
                         <Button
                           size="sm"
-                          onClick={() => handleDownloadPdf(item.id)}
+                          onClick={() => downloadReceiptPdf(item.id)}
                           disabled={downloadingId === item.id}
                         >
                           <Download className="w-4 h-4 mr-1" />
@@ -137,7 +98,7 @@ const Payments = () => {
               <h2 className="font-display font-semibold text-lg">Receipt Detail</h2>
               <Button
                 size="sm"
-                onClick={() => handleDownloadPdf(receiptQuery.data!.paymentId)}
+                onClick={() => downloadReceiptPdf(receiptQuery.data!.paymentId)}
                 disabled={downloadingId === receiptQuery.data.paymentId}
               >
                 <Download className="w-4 h-4 mr-2" />

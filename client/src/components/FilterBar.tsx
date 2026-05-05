@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal, Calendar } from "lucide-react";
 
 interface FilterBarProps {
   categories: string[];
@@ -78,12 +78,16 @@ const FilterBar = ({
           ))}
         </select>
 
-        <input
-          type="date"
-          value={dateFilter}
-          onChange={(e) => onDateFilterChange(e.target.value)}
-          className="bg-muted/50 border border-glass-border rounded-lg px-3 py-1.5 text-sm text-foreground outline-none focus:ring-1 focus:ring-primary/50 transition-all"
-        />
+        <div className="relative">
+          <Calendar className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none" />
+          <input
+            type="date"
+            value={dateFilter}
+            onChange={(e) => onDateFilterChange(e.target.value)}
+            className="bg-muted/50 border border-glass-border rounded-lg pl-9 pr-3 py-1.5 text-sm text-foreground outline-none focus:ring-1 focus:ring-primary/50 transition-all
+              [&::-webkit-calendar-picker-indicator]:opacity-0"
+          />
+        </div>
 
         <select
           value={minRating}

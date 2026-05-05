@@ -422,7 +422,11 @@ const CreateActivity = () => {
                   value={formData[field as keyof typeof formData]}
                   onChange={(e) => handleChange(field, e.target.value)}
                   placeholder={placeholder}
-                  className="bg-muted/30 border-glass-border focus:ring-primary/50"
+                  className="bg-muted/30 w-full border-glass-border focus:ring-primary/50
+                  [&::-webkit-calendar-picker-indicator]:cursor-pointer
+                  [&::-webkit-calendar-picker-indicator]:opacity-80
+                  [&::-webkit-calendar-picker-indicator]:invert
+                  dark:[&::-webkit-calendar-picker-indicator]:invert-0"
                 />
               )}
               {fieldErrors[field] && <p className="text-destructive text-sm mt-2">{fieldErrors[field]}</p>}

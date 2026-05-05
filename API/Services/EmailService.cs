@@ -22,10 +22,261 @@ public class EmailService(
     private readonly EmailTemplateBuilder _templateBuilder = new(
         configuration["AppSettings:ClientBaseUrl"] ?? configuration["AppUrl"] ?? "http://localhost:5173");
 
-    public Task SendEmailAsync(string toEmail, string subject, string body, CancellationToken cancellationToken = default)
-        => SendEmailAsync(toEmail, subject, body, attachments: null, cancellationToken);
+    // ============================================================
+    // Public API: thin wrappers that dispatch to the engine below.
+    // Signatures preserved for IEmailService backward compatibility.
+    // ============================================================
 
-    public async Task SendEmailAsync(
+    public Task SendEmailAsync(string toEmail, string subject, string body, CancellationToken cancellationToken = default)
+        => SendRawEmailAsync(toEmail, subject, body, attachments: null, cancellationToken);
+
+    public Task SendBookingRequestEmailAsync(
+        string userEmail, string userName, string activityId, string activityTitle,
+        DateTime activityDate, string location, string? hostName,
+        CancellationToken cancellationToken = default)
+        => DispatchActivityEmailAsync(EmailScenario.BookingRequest,
+            new EmailContext(userEmail, userName, activityId, activityTitle, activityDate, location, hostName),
+            cancellationToken);
+
+    public Task SendBookingApprovedEmailAsync(
+        string userEmail, string userName, string activityId, string activityTitle,
+        DateTime activityDate, string location, string? hostName,
+        decimal? price, string currency, CancellationToken cancellationToken = default)
+        => DispatchActivityEmailAsync(EmailScenario.BookingApproved,
+            new EmailContext(userEmail, userName, activityId, activityTitle, activityDate, location, hostName,
+                Price: price, Currency: currency),
+            cancellationToken);
+
+    public Task SendActivityJoinedEmailAsync(
+        string userEmail, string userName, string activityId, string activityTitle,
+        DateTime activityDate, string location, string? hostName,
+        CancellationToken cancellationToken = default)
+        => DispatchActivityEmailAsync(EmailScenario.ActivityJoined,
+            new EmailContext(userEmail, userName, activityId, activityTitle, activityDate, location, hostName),
+            cancellationToken);
+
+    public Task SendPaymentSuccessfulEmailAsync(
+        string userEmail, string userName, string paymentId, string activityId, string activityTitle,
+        DateTime activityDate, string location, string? hostName,
+        decimal amount, string currency, CancellationToken cancellationToken = default)
+        => DispatchActivityEmailAsync(EmailScenario.PaymentSuccessful,
+            new EmailContext(userEmail, userName, activityId, activityTitle, activityDate, location, hostName,
+                PaymentId: paymentId, Price: amount, Currency: currency),
+            cancellationToken);
+
+    public Task SendPaymentRequiredEmailAsync(
+        string userEmail, string userName, string activityId, string activityTitle,
+        DateTime activityDate, string location, decimal amount, string currency,
+        string? checkoutUrl, CancellationToken cancellationToken = default)
+        => DispatchActivityEmailAsync(EmailScenario.PaymentRequired,
+            new EmailContext(userEmail, userName, activityId, activityTitle, activityDate, location, HostName: null,
+                Price: amount, Currency: currency, CheckoutUrl: checkoutUrl),
+            cancellationToken);
+
+    public Task SendBookingRejectedEmailAsync(
+        string userEmail, string userName, string activityId, string activityTitle,
+        DateTime activityDate, string location,
+        CancellationToken cancellationToken = default)
+        => DispatchActivityEmailAsync(EmailScenario.BookingRejected,
+            new EmailContext(userEmail, userName, activityId, activityTitle, activityDate, location, HostName: null),
+            cancellationToken);
+
+    public Task SendBookingCancelledEmailAsync(
+        string userEmail, string userName, string activityId, string activityTitle,
+        DateTime activityDate, string location,
+        CancellationToken cancellationToken = default)
+        => DispatchActivityEmailAsync(EmailScenario.BookingCancelled,
+            new EmailContext(userEmail, userName, activityId, activityTitle, activityDate, location, HostName: null),
+            cancellationToken);
+
+    // ============================================================
+    // Engine
+    // ============================================================
+
+    private enum EmailScenario
+    {
+        BookingRequest,
+        BookingApproved,
+        ActivityJoined,
+        PaymentSuccessful,
+        PaymentRequired,
+        BookingRejected,
+        BookingCancelled,
+    }
+
+    private enum ReceiptAttachmentMode { None, BookingConfirmation, PaymentReceipt }
+
+    private record EmailContext(
+        string UserEmail,
+        string UserName,
+        string ActivityId,
+        string ActivityTitle,
+        DateTime ActivityDate,
+        string Location,
+        string? HostName,
+        string? PaymentId = null,
+        decimal? Price = null,
+        string Currency = "USD",
+        string? CheckoutUrl = null);
+
+    private record ScenarioConfig(
+        string Subject,
+        string StatusBadge,
+        string StatusBadgeColor,
+        Func<EmailContext, string> Message,
+        Func<EmailContext, string?> SecondaryMessage,
+        Func<EmailContext, (string Label, string Url)> PrimaryCta,
+        Func<EmailContext, (string Label, string Url)?> SecondaryCta,
+        ReceiptAttachmentMode Attachment,
+        string ReceiptStatusLabel = "Confirmed",
+        bool UsePaymentTemplate = false);
+
+    private static readonly Dictionary<EmailScenario, ScenarioConfig> Scenarios = new()
+    {
+        [EmailScenario.BookingRequest] = new(
+            Subject: "Booking Request Received - Reactivities",
+            StatusBadge: "Pending Approval",
+            StatusBadgeColor: "#f59e0b",
+            Message: _ => "Your booking request has been received! The activity host will review your request and send you a confirmation or rejection soon.",
+            SecondaryMessage: _ => "You can view the activity details and track your booking status from your dashboard.",
+            PrimaryCta: ctx => ("View Activity", $"/activities/{ctx.ActivityId}"),
+            SecondaryCta: _ => ("Back to Activities", "/activities"),
+            Attachment: ReceiptAttachmentMode.None),
+
+        [EmailScenario.BookingApproved] = new(
+            Subject: "Booking Approved! - Reactivities",
+            StatusBadge: "Approved",
+            StatusBadgeColor: "#10b981",
+            Message: _ => "Great news! Your booking has been approved. You're all set to join this activity!",
+            SecondaryMessage: ctx => ctx.Price.HasValue && ctx.Price > 0
+                ? "Please note: Payment may be required to complete your booking. Check the activity details for more information."
+                : "See you at the activity!",
+            PrimaryCta: ctx => ("View Activity Details", $"/activities/{ctx.ActivityId}"),
+            SecondaryCta: _ => ("Browse More Activities", "/activities"),
+            Attachment: ReceiptAttachmentMode.BookingConfirmation,
+            ReceiptStatusLabel: "Approved"),
+
+        [EmailScenario.ActivityJoined] = new(
+            Subject: "You've Joined an Activity! - Reactivities",
+            StatusBadge: "Joined",
+            StatusBadgeColor: "#10b981",
+            Message: ctx => $"You've successfully joined '{ctx.ActivityTitle}'! We're excited to see you there.",
+            SecondaryMessage: _ => "You'll receive a reminder email a few days before the activity date.",
+            PrimaryCta: ctx => ("View Activity", $"/activities/{ctx.ActivityId}"),
+            SecondaryCta: _ => ("Browse More Activities", "/activities"),
+            Attachment: ReceiptAttachmentMode.BookingConfirmation,
+            ReceiptStatusLabel: "Confirmed"),
+
+        [EmailScenario.PaymentSuccessful] = new(
+            Subject: "Payment Successful - Reactivities",
+            StatusBadge: "Payment Confirmed",
+            StatusBadgeColor: "#10b981",
+            Message: _ => "Your payment has been processed successfully. Your booking is confirmed!",
+            SecondaryMessage: _ => "A receipt has been sent to this email address. Keep it for your records.",
+            PrimaryCta: ctx => ("View Activity", $"/activity/{ctx.ActivityId}"),
+            SecondaryCta: _ => ("View Payments", "/payments"),
+            Attachment: ReceiptAttachmentMode.PaymentReceipt,
+            UsePaymentTemplate: true),
+
+        [EmailScenario.PaymentRequired] = new(
+            Subject: "Payment Required - Reactivities",
+            StatusBadge: "Payment Required",
+            StatusBadgeColor: "#f59e0b",
+            Message: ctx => $"To complete your booking for '{ctx.ActivityTitle}', payment is required.",
+            SecondaryMessage: ctx => $"Payment amount: {ctx.Currency} {ctx.Price ?? 0:F2}. Please complete payment to secure your spot.",
+            PrimaryCta: ctx => ("Pay Now", !string.IsNullOrWhiteSpace(ctx.CheckoutUrl)
+                ? ctx.CheckoutUrl!
+                : $"/payments?activityId={ctx.ActivityId}"),
+            SecondaryCta: ctx => ("View Activity", $"/activities/{ctx.ActivityId}"),
+            Attachment: ReceiptAttachmentMode.None),
+
+        [EmailScenario.BookingRejected] = new(
+            Subject: "Booking Request Rejected - Reactivities",
+            StatusBadge: "Rejected",
+            StatusBadgeColor: "#ef4444",
+            Message: ctx => $"Unfortunately, your booking request for '{ctx.ActivityTitle}' has been rejected by the host.",
+            SecondaryMessage: _ => "You can browse other activities or contact the host if you have any questions.",
+            PrimaryCta: _ => ("Browse Other Activities", "/activities"),
+            SecondaryCta: _ => ("Contact Support", "/contact"),
+            Attachment: ReceiptAttachmentMode.None),
+
+        [EmailScenario.BookingCancelled] = new(
+            Subject: "Booking Cancelled - Reactivities",
+            StatusBadge: "Cancelled",
+            StatusBadgeColor: "#ef4444",
+            Message: ctx => $"Your booking for '{ctx.ActivityTitle}' has been cancelled.",
+            SecondaryMessage: _ => "If you have any questions about this cancellation or would like to request a refund, please contact our support team.",
+            PrimaryCta: _ => ("Browse Other Activities", "/activities"),
+            SecondaryCta: _ => ("Contact Support", "/contact"),
+            Attachment: ReceiptAttachmentMode.None),
+    };
+
+    private async Task DispatchActivityEmailAsync(EmailScenario scenario, EmailContext ctx, CancellationToken cancellationToken)
+    {
+        var cfg = Scenarios[scenario];
+        var (primaryLabel, primaryUrl) = cfg.PrimaryCta(ctx);
+        var secondary = cfg.SecondaryCta(ctx);
+
+        string htmlBody;
+        if (cfg.UsePaymentTemplate)
+        {
+            var data = new PaymentEmailData
+            {
+                RecipientName = ctx.UserName,
+                RecipientEmail = ctx.UserEmail,
+                PaymentId = ctx.PaymentId ?? string.Empty,
+                ActivityId = ctx.ActivityId,
+                ActivityTitle = ctx.ActivityTitle,
+                ActivityDate = ctx.ActivityDate,
+                ActivityLocation = ctx.Location,
+                HostName = ctx.HostName,
+                Amount = ctx.Price ?? 0m,
+                Currency = ctx.Currency,
+                StatusBadge = cfg.StatusBadge,
+                StatusBadgeColor = cfg.StatusBadgeColor,
+                Message = cfg.Message(ctx),
+                SecondaryMessage = cfg.SecondaryMessage(ctx),
+            };
+            htmlBody = _templateBuilder.BuildPaymentEmail(data, primaryLabel, primaryUrl, secondary?.Label, secondary?.Url);
+        }
+        else
+        {
+            var data = new ActivityEmailData
+            {
+                RecipientName = ctx.UserName,
+                RecipientEmail = ctx.UserEmail,
+                ActivityId = ctx.ActivityId,
+                ActivityTitle = ctx.ActivityTitle,
+                ActivityDate = ctx.ActivityDate,
+                ActivityLocation = ctx.Location,
+                HostName = ctx.HostName,
+                Price = ctx.Price,
+                Currency = ctx.Currency,
+                StatusBadge = cfg.StatusBadge,
+                StatusBadgeColor = cfg.StatusBadgeColor,
+                Message = cfg.Message(ctx),
+                SecondaryMessage = cfg.SecondaryMessage(ctx),
+            };
+            htmlBody = _templateBuilder.BuildActivityEmail(data, primaryLabel, primaryUrl, secondary?.Label, secondary?.Url);
+        }
+
+        var attachments = cfg.Attachment switch
+        {
+            ReceiptAttachmentMode.PaymentReceipt when ctx.PaymentId is not null
+                => await BuildPaymentReceiptAttachmentAsync(ctx.PaymentId, cancellationToken),
+            ReceiptAttachmentMode.BookingConfirmation
+                => await BuildBookingReceiptAttachmentAsync(ctx, cfg.ReceiptStatusLabel, cancellationToken),
+            _ => null,
+        };
+
+        await SendRawEmailAsync(ctx.UserEmail, cfg.Subject, htmlBody, attachments, cancellationToken);
+    }
+
+    // ============================================================
+    // SMTP send (was previously SendEmailAsync overload)
+    // ============================================================
+
+    private async Task SendRawEmailAsync(
         string toEmail,
         string subject,
         string body,
@@ -67,12 +318,12 @@ public class EmailService(
             message.Body = bodyBuilder.ToMessageBody();
 
             using var client = new SmtpClient();
-            
+
             // Use StartTls for port 587 (standard for Gmail and others)
-            var secureSocketOptions = smtpSettings.Port == 465 
-                ? SecureSocketOptions.SslOnConnect 
+            var secureSocketOptions = smtpSettings.Port == 465
+                ? SecureSocketOptions.SslOnConnect
                 : SecureSocketOptions.StartTls;
-            
+
             await client.ConnectAsync(smtpSettings.Host, smtpSettings.Port, secureSocketOptions, cancellationToken);
 
             var smtpUserName = smtpSettings.UserName?.Trim();
@@ -105,275 +356,9 @@ public class EmailService(
         }
     }
 
-    public async Task SendBookingRequestEmailAsync(
-        string userEmail,
-        string userName,
-        string activityId,
-        string activityTitle,
-        DateTime activityDate,
-        string location,
-        string? hostName,
-        CancellationToken cancellationToken = default)
-    {
-        var data = new ActivityEmailData
-        {
-            RecipientName = userName,
-            RecipientEmail = userEmail,
-            ActivityId = activityId,
-            ActivityTitle = activityTitle,
-            ActivityDate = activityDate,
-            ActivityLocation = location,
-            HostName = hostName,
-            StatusBadge = "Pending Approval",
-            StatusBadgeColor = "#f59e0b",
-            Message = "Your booking request has been received! The activity host will review your request and send you a confirmation or rejection soon.",
-            SecondaryMessage = "You can view the activity details and track your booking status from your dashboard."
-        };
-
-        var htmlBody = _templateBuilder.BuildActivityEmail(
-            data,
-            "View Activity",
-            $"/activities/{activityId}",
-            "Back to Activities",
-            "/activities");
-
-        await SendEmailAsync(userEmail, "Booking Request Received - Reactivities", htmlBody, cancellationToken);
-    }
-
-    public async Task SendBookingApprovedEmailAsync(
-        string userEmail,
-        string userName,
-        string activityId,
-        string activityTitle,
-        DateTime activityDate,
-        string location,
-        string? hostName,
-        decimal? price,
-        string currency,
-        CancellationToken cancellationToken = default)
-    {
-        var data = new ActivityEmailData
-        {
-            RecipientName = userName,
-            RecipientEmail = userEmail,
-            ActivityId = activityId,
-            ActivityTitle = activityTitle,
-            ActivityDate = activityDate,
-            ActivityLocation = location,
-            HostName = hostName,
-            Price = price,
-            Currency = currency,
-            StatusBadge = "Approved",
-            StatusBadgeColor = "#10b981",
-            Message = "Great news! Your booking has been approved. You're all set to join this activity!",
-            SecondaryMessage = price.HasValue && price > 0
-                ? "Please note: Payment may be required to complete your booking. Check the activity details for more information."
-                : "See you at the activity!"
-        };
-
-        var htmlBody = _templateBuilder.BuildActivityEmail(
-            data,
-            "View Activity Details",
-            $"/activities/{activityId}",
-            "Browse More Activities",
-            "/activities");
-
-        var attachments = await BuildBookingReceiptAttachmentAsync(
-            activityId, userEmail, userName, hostName, price ?? 0m, currency, "Approved", cancellationToken);
-
-        await SendEmailAsync(userEmail, "Booking Approved! - Reactivities", htmlBody, attachments, cancellationToken);
-    }
-
-    public async Task SendActivityJoinedEmailAsync(
-        string userEmail,
-        string userName,
-        string activityId,
-        string activityTitle,
-        DateTime activityDate,
-        string location,
-        string? hostName,
-        CancellationToken cancellationToken = default)
-    {
-        var data = new ActivityEmailData
-        {
-            RecipientName = userName,
-            RecipientEmail = userEmail,
-            ActivityId = activityId,
-            ActivityTitle = activityTitle,
-            ActivityDate = activityDate,
-            ActivityLocation = location,
-            HostName = hostName,
-            StatusBadge = "Joined",
-            StatusBadgeColor = "#10b981",
-            Message = $"You've successfully joined '{activityTitle}'! We're excited to see you there.",
-            SecondaryMessage = "You'll receive a reminder email a few days before the activity date."
-        };
-
-        var htmlBody = _templateBuilder.BuildActivityEmail(
-            data,
-            "View Activity",
-            $"/activities/{activityId}",
-            "Browse More Activities",
-            "/activities");
-
-        var attachments = await BuildBookingReceiptAttachmentAsync(
-            activityId, userEmail, userName, hostName, 0m, "USD", "Confirmed", cancellationToken);
-
-        await SendEmailAsync(userEmail, "You've Joined an Activity! - Reactivities", htmlBody, attachments, cancellationToken);
-    }
-
-    public async Task SendPaymentSuccessfulEmailAsync(
-        string userEmail,
-        string userName,
-        string paymentId,
-        string activityId,
-        string activityTitle,
-        DateTime activityDate,
-        string location,
-        string? hostName,
-        decimal amount,
-        string currency,
-        CancellationToken cancellationToken = default)
-    {
-        var data = new PaymentEmailData
-        {
-            RecipientName = userName,
-            RecipientEmail = userEmail,
-            PaymentId = paymentId,
-            ActivityId = activityId,
-            ActivityTitle = activityTitle,
-            ActivityDate = activityDate,
-            ActivityLocation = location,
-            HostName = hostName,
-            Amount = amount,
-            Currency = currency,
-            StatusBadge = "Payment Confirmed",
-            StatusBadgeColor = "#10b981",
-            Message = "Your payment has been processed successfully. Your booking is confirmed!",
-            SecondaryMessage = "A receipt has been sent to this email address. Keep it for your records."
-        };
-
-        var htmlBody = _templateBuilder.BuildPaymentEmail(
-            data,
-            "View Activity",
-            $"/activity/{activityId}",
-            "View Payments",
-            "/payments");
-
-        var attachments = await BuildPaymentReceiptAttachmentAsync(paymentId, cancellationToken);
-
-        await SendEmailAsync(userEmail, "Payment Successful - Reactivities", htmlBody, attachments, cancellationToken);
-    }
-
-    public async Task SendPaymentRequiredEmailAsync(
-        string userEmail,
-        string userName,
-        string activityId,
-        string activityTitle,
-        DateTime activityDate,
-        string location,
-        decimal amount,
-        string currency,
-        string? checkoutUrl,
-        CancellationToken cancellationToken = default)
-    {
-        var paymentUrl = !string.IsNullOrWhiteSpace(checkoutUrl) 
-            ? checkoutUrl 
-            : $"/payments?activityId={activityId}";
-
-        var data = new ActivityEmailData
-        {
-            RecipientName = userName,
-            RecipientEmail = userEmail,
-            ActivityId = activityId,
-            ActivityTitle = activityTitle,
-            ActivityDate = activityDate,
-            ActivityLocation = location,
-            Price = amount,
-            Currency = currency,
-            StatusBadge = "Payment Required",
-            StatusBadgeColor = "#f59e0b",
-            Message = $"To complete your booking for '{activityTitle}', payment is required.",
-            SecondaryMessage = $"Payment amount: {currency} {amount:F2}. Please complete payment to secure your spot."
-        };
-
-        var htmlBody = _templateBuilder.BuildActivityEmail(
-            data,
-            "Pay Now",
-            paymentUrl,
-            "View Activity",
-            $"/activities/{activityId}");
-
-        await SendEmailAsync(userEmail, "Payment Required - Reactivities", htmlBody, cancellationToken);
-    }
-
-    public async Task SendBookingRejectedEmailAsync(
-        string userEmail,
-        string userName,
-        string activityId,
-        string activityTitle,
-        DateTime activityDate,
-        string location,
-        CancellationToken cancellationToken = default)
-    {
-        var data = new ActivityEmailData
-        {
-            RecipientName = userName,
-            RecipientEmail = userEmail,
-            ActivityId = activityId,
-            ActivityTitle = activityTitle,
-            ActivityDate = activityDate,
-            ActivityLocation = location,
-            StatusBadge = "Rejected",
-            StatusBadgeColor = "#ef4444",
-            Message = $"Unfortunately, your booking request for '{activityTitle}' has been rejected by the host.",
-            SecondaryMessage = "You can browse other activities or contact the host if you have any questions."
-        };
-
-        var htmlBody = _templateBuilder.BuildActivityEmail(
-            data,
-            "Browse Other Activities",
-            "/activities",
-            "Contact Support",
-            "/contact");
-
-        await SendEmailAsync(userEmail, "Booking Request Rejected - Reactivities", htmlBody, cancellationToken);
-    }
-
-    public async Task SendBookingCancelledEmailAsync(
-        string userEmail,
-        string userName,
-        string activityId,
-        string activityTitle,
-        DateTime activityDate,
-        string location,
-        CancellationToken cancellationToken = default)
-    {
-        var data = new ActivityEmailData
-        {
-            RecipientName = userName,
-            RecipientEmail = userEmail,
-            ActivityId = activityId,
-            ActivityTitle = activityTitle,
-            ActivityDate = activityDate,
-            ActivityLocation = location,
-            StatusBadge = "Cancelled",
-            StatusBadgeColor = "#ef4444",
-            Message = $"Your booking for '{activityTitle}' has been cancelled.",
-            SecondaryMessage = "If you have any questions about this cancellation or would like to request a refund, please contact our support team."
-        };
-
-        var htmlBody = _templateBuilder.BuildActivityEmail(
-            data,
-            "Browse Other Activities",
-            "/activities",
-            "Contact Support",
-            "/contact");
-
-        await SendEmailAsync(userEmail, "Booking Cancelled - Reactivities", htmlBody, cancellationToken);
-    }
-
-    // ---------- PDF receipt helpers ----------
+    // ============================================================
+    // PDF receipt attachment builders
+    // ============================================================
 
     private async Task<IEnumerable<EmailAttachment>?> BuildPaymentReceiptAttachmentAsync(
         string paymentId, CancellationToken cancellationToken)
@@ -456,19 +441,14 @@ public class EmailService(
     }
 
     private async Task<IEnumerable<EmailAttachment>?> BuildBookingReceiptAttachmentAsync(
-        string activityId,
-        string userEmail,
-        string userName,
-        string? hostName,
-        decimal amount,
-        string currency,
+        EmailContext ctx,
         string statusLabel,
         CancellationToken cancellationToken)
     {
         try
         {
             var activity = await dbContext.Activities
-                .Where(a => a.Id == activityId)
+                .Where(a => a.Id == ctx.ActivityId)
                 .Select(a => new
                 {
                     a.Id,
@@ -484,28 +464,27 @@ public class EmailService(
 
             if (activity == null) return null;
 
-            var resolvedAmount = amount > 0 ? amount : activity.PriceAmount;
-            var resolvedCurrency = !string.IsNullOrWhiteSpace(currency) ? currency : (activity.Currency ?? "USD");
-
+            var resolvedAmount = ctx.Price ?? activity.PriceAmount;
+            var resolvedCurrency = !string.IsNullOrWhiteSpace(ctx.Currency) ? ctx.Currency : (activity.Currency ?? "USD");
             var bookingRef = $"BKG-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}";
 
             var data = new ReceiptData
             {
                 Kind = ReceiptKind.Booking,
                 ReceiptNumber = bookingRef,
-                RecipientName = string.IsNullOrWhiteSpace(userName) ? userEmail : userName,
-                RecipientEmail = userEmail,
+                RecipientName = string.IsNullOrWhiteSpace(ctx.UserName) ? ctx.UserEmail : ctx.UserName,
+                RecipientEmail = ctx.UserEmail,
                 ActivityId = activity.Id,
                 ActivityTitle = activity.Title,
                 ActivityDate = activity.Date,
                 Venue = activity.Venue,
                 City = activity.City,
-                HostName = hostName,
+                HostName = ctx.HostName,
                 Category = activity.Category,
                 Amount = resolvedAmount,
                 Currency = resolvedCurrency,
                 StatusLabel = statusLabel,
-                StatusColorHex = statusLabel.Equals("Approved", StringComparison.OrdinalIgnoreCase) ? "#10b981" : "#10b981",
+                StatusColorHex = "#10b981",
                 IssuedAt = DateTime.UtcNow,
             };
 
@@ -514,7 +493,7 @@ public class EmailService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to build booking receipt PDF for activityId={ActivityId}", activityId);
+            logger.LogError(ex, "Failed to build booking receipt PDF for activityId={ActivityId}", ctx.ActivityId);
             return null;
         }
     }
