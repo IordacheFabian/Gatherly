@@ -252,6 +252,20 @@ export const notificationsApi = {
 export const paymentsApi = {
   history: (limit = 50) => request<PaymentHistoryItem[]>(`/api/payments/history?limit=${limit}`),
   receipt: (paymentId: string) => request<PaymentReceipt>(`/api/payments/${paymentId}/receipt`),
+  downloadReceiptPdf: async (paymentId: string) => {
+    const response = await fetch(`${API_BASE}/api/payments/${paymentId}/receipt/pdf`, {
+      credentials: "include",
+    });
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      throw new ApiError(text || "Failed to download receipt", response.status);
+    }
+    const blob = await response.blob();
+    const disposition = response.headers.get("content-disposition") ?? "";
+    const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition);
+    const fileName = match ? decodeURIComponent(match[1]) : `receipt-${paymentId}.pdf`;
+    return { blob, fileName };
+  },
 };
 
 export { ApiError };

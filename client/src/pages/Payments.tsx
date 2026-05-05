@@ -2,12 +2,35 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Download } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
 import { paymentsApi } from "@/lib/api";
+import { toast } from "@/components/ui/sonner";
 
 const Payments = () => {
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const handleDownloadPdf = async (paymentId: string) => {
+    try {
+      setDownloadingId(paymentId);
+      const { blob, fileName } = await paymentsApi.downloadReceiptPdf(paymentId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("Receipt downloaded");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to download receipt");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   const historyQuery = useQuery({
     queryKey: ["payments", "history"],
@@ -83,13 +106,23 @@ const Payments = () => {
                     <td className="py-3">{item.receiptNumber}</td>
                     <td className="py-3">{new Date(item.createdAt).toLocaleString()}</td>
                     <td className="py-3">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setSelectedPaymentId(item.id)}
-                      >
-                        View receipt
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setSelectedPaymentId(item.id)}
+                        >
+                          View receipt
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleDownloadPdf(item.id)}
+                          disabled={downloadingId === item.id}
+                        >
+                          <Download className="w-4 h-4 mr-1" />
+                          {downloadingId === item.id ? "Downloading..." : "PDF"}
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -100,7 +133,17 @@ const Payments = () => {
 
         {receiptQuery.data && (
           <div className="glass rounded-xl p-6 space-y-2">
-            <h2 className="font-display font-semibold text-lg">Receipt Detail</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="font-display font-semibold text-lg">Receipt Detail</h2>
+              <Button
+                size="sm"
+                onClick={() => handleDownloadPdf(receiptQuery.data!.paymentId)}
+                disabled={downloadingId === receiptQuery.data.paymentId}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {downloadingId === receiptQuery.data.paymentId ? "Downloading..." : "Download PDF"}
+              </Button>
+            </div>
             <p>Activity: {receiptQuery.data.activityTitle}</p>
             <p>When: {new Date(receiptQuery.data.activityDate).toLocaleString()}</p>
             <p>Location: {receiptQuery.data.venue}, {receiptQuery.data.city}</p>

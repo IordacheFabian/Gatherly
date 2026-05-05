@@ -1,21 +1,36 @@
 using Application.Interfaces;
 using Application.Email;
 using Application.Email.DTOs;
+using Application.Receipts;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
+using Microsoft.EntityFrameworkCore;
+using Persistence;
 
 namespace API.Services;
+
+public record EmailAttachment(string FileName, byte[] Content, string ContentType);
 
 public class EmailService(
     SmtpSettings smtpSettings,
     ILogger<EmailService> logger,
-    IConfiguration configuration) : IEmailService
+    IConfiguration configuration,
+    IReceiptPdfGenerator receiptPdfGenerator,
+    AppDbContext dbContext) : IEmailService
 {
     private readonly EmailTemplateBuilder _templateBuilder = new(
         configuration["AppSettings:ClientBaseUrl"] ?? configuration["AppUrl"] ?? "http://localhost:5173");
 
-    public async Task SendEmailAsync(string toEmail, string subject, string body, CancellationToken cancellationToken = default)
+    public Task SendEmailAsync(string toEmail, string subject, string body, CancellationToken cancellationToken = default)
+        => SendEmailAsync(toEmail, subject, body, attachments: null, cancellationToken);
+
+    public async Task SendEmailAsync(
+        string toEmail,
+        string subject,
+        string body,
+        IEnumerable<EmailAttachment>? attachments,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(toEmail))
         {
@@ -41,6 +56,14 @@ public class EmailService(
             message.Subject = subject;
 
             var bodyBuilder = new BodyBuilder { HtmlBody = body };
+            if (attachments != null)
+            {
+                foreach (var att in attachments)
+                {
+                    if (att?.Content == null || att.Content.Length == 0) continue;
+                    bodyBuilder.Attachments.Add(att.FileName, att.Content, ContentType.Parse(att.ContentType));
+                }
+            }
             message.Body = bodyBuilder.ToMessageBody();
 
             using var client = new SmtpClient();
@@ -155,7 +178,10 @@ public class EmailService(
             "Browse More Activities",
             "/activities");
 
-        await SendEmailAsync(userEmail, "Booking Approved! - Reactivities", htmlBody, cancellationToken);
+        var attachments = await BuildBookingReceiptAttachmentAsync(
+            activityId, userEmail, userName, hostName, price ?? 0m, currency, "Approved", cancellationToken);
+
+        await SendEmailAsync(userEmail, "Booking Approved! - Reactivities", htmlBody, attachments, cancellationToken);
     }
 
     public async Task SendActivityJoinedEmailAsync(
@@ -190,7 +216,10 @@ public class EmailService(
             "Browse More Activities",
             "/activities");
 
-        await SendEmailAsync(userEmail, "You've Joined an Activity! - Reactivities", htmlBody, cancellationToken);
+        var attachments = await BuildBookingReceiptAttachmentAsync(
+            activityId, userEmail, userName, hostName, 0m, "USD", "Confirmed", cancellationToken);
+
+        await SendEmailAsync(userEmail, "You've Joined an Activity! - Reactivities", htmlBody, attachments, cancellationToken);
     }
 
     public async Task SendPaymentSuccessfulEmailAsync(
@@ -226,10 +255,14 @@ public class EmailService(
 
         var htmlBody = _templateBuilder.BuildPaymentEmail(
             data,
-            "View Your Activity",
-            $"/activities/{activityId}");
+            "View Activity",
+            $"/activity/{activityId}",
+            "View Payments",
+            "/payments");
 
-        await SendEmailAsync(userEmail, "Payment Successful - Reactivities", htmlBody, cancellationToken);
+        var attachments = await BuildPaymentReceiptAttachmentAsync(paymentId, cancellationToken);
+
+        await SendEmailAsync(userEmail, "Payment Successful - Reactivities", htmlBody, attachments, cancellationToken);
     }
 
     public async Task SendPaymentRequiredEmailAsync(
@@ -338,5 +371,151 @@ public class EmailService(
             "/contact");
 
         await SendEmailAsync(userEmail, "Booking Cancelled - Reactivities", htmlBody, cancellationToken);
+    }
+
+    // ---------- PDF receipt helpers ----------
+
+    private async Task<IEnumerable<EmailAttachment>?> BuildPaymentReceiptAttachmentAsync(
+        string paymentId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var p = await dbContext.Payments
+                .Where(x => x.Id == paymentId)
+                .Select(x => new
+                {
+                    x.Id,
+                    UserDisplayName = x.User.DisplayName,
+                    UserEmail = x.User.Email,
+                    x.InvoiceNumber,
+                    x.ReceiptNumber,
+                    x.CheckoutSessionId,
+                    x.Provider,
+                    x.ActivityId,
+                    ActivityTitle = x.Activity.Title,
+                    ActivityDate = x.Activity.Date,
+                    ActivityCategory = x.Activity.Category,
+                    x.Activity.Venue,
+                    x.Activity.City,
+                    HostDisplayName = x.Activity.Attendees
+                        .Where(a => a.IsHost)
+                        .Select(a => a.User.DisplayName)
+                        .FirstOrDefault(),
+                    x.Amount,
+                    x.Currency,
+                    x.Status,
+                    x.CreatedAt,
+                    x.PaidAt,
+                    x.RefundedAt,
+                })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (p == null) return null;
+
+            var (statusLabel, statusColor) = p.Status switch
+            {
+                Domain.PaymentStatus.Succeeded => ("Paid", "#10b981"),
+                Domain.PaymentStatus.Refunded => ("Refunded", "#64748b"),
+                Domain.PaymentStatus.Failed => ("Failed", "#ef4444"),
+                _ => ("Pending", "#f59e0b"),
+            };
+
+            var data = new ReceiptData
+            {
+                Kind = ReceiptKind.Payment,
+                ReceiptNumber = p.ReceiptNumber,
+                InvoiceNumber = p.InvoiceNumber,
+                CheckoutSessionId = p.CheckoutSessionId,
+                Provider = p.Provider,
+                RecipientName = p.UserDisplayName ?? p.UserEmail ?? "Customer",
+                RecipientEmail = p.UserEmail ?? string.Empty,
+                ActivityId = p.ActivityId,
+                ActivityTitle = p.ActivityTitle,
+                ActivityDate = p.ActivityDate,
+                Venue = p.Venue,
+                City = p.City,
+                HostName = p.HostDisplayName,
+                Category = p.ActivityCategory,
+                Amount = p.Amount,
+                Currency = p.Currency,
+                StatusLabel = statusLabel,
+                StatusColorHex = statusColor,
+                IssuedAt = p.CreatedAt,
+                PaidAt = p.PaidAt,
+                RefundedAt = p.RefundedAt,
+            };
+
+            var bytes = receiptPdfGenerator.Generate(data);
+            return [new EmailAttachment(receiptPdfGenerator.BuildFileName(data), bytes, "application/pdf")];
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to build payment receipt PDF for paymentId={PaymentId}", paymentId);
+            return null;
+        }
+    }
+
+    private async Task<IEnumerable<EmailAttachment>?> BuildBookingReceiptAttachmentAsync(
+        string activityId,
+        string userEmail,
+        string userName,
+        string? hostName,
+        decimal amount,
+        string currency,
+        string statusLabel,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var activity = await dbContext.Activities
+                .Where(a => a.Id == activityId)
+                .Select(a => new
+                {
+                    a.Id,
+                    a.Title,
+                    a.Date,
+                    a.Category,
+                    a.Venue,
+                    a.City,
+                    a.PriceAmount,
+                    a.Currency,
+                })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (activity == null) return null;
+
+            var resolvedAmount = amount > 0 ? amount : activity.PriceAmount;
+            var resolvedCurrency = !string.IsNullOrWhiteSpace(currency) ? currency : (activity.Currency ?? "USD");
+
+            var bookingRef = $"BKG-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}";
+
+            var data = new ReceiptData
+            {
+                Kind = ReceiptKind.Booking,
+                ReceiptNumber = bookingRef,
+                RecipientName = string.IsNullOrWhiteSpace(userName) ? userEmail : userName,
+                RecipientEmail = userEmail,
+                ActivityId = activity.Id,
+                ActivityTitle = activity.Title,
+                ActivityDate = activity.Date,
+                Venue = activity.Venue,
+                City = activity.City,
+                HostName = hostName,
+                Category = activity.Category,
+                Amount = resolvedAmount,
+                Currency = resolvedCurrency,
+                StatusLabel = statusLabel,
+                StatusColorHex = statusLabel.Equals("Approved", StringComparison.OrdinalIgnoreCase) ? "#10b981" : "#10b981",
+                IssuedAt = DateTime.UtcNow,
+            };
+
+            var bytes = receiptPdfGenerator.Generate(data);
+            return [new EmailAttachment(receiptPdfGenerator.BuildFileName(data), bytes, "application/pdf")];
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to build booking receipt PDF for activityId={ActivityId}", activityId);
+            return null;
+        }
     }
 }

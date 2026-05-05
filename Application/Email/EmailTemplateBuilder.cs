@@ -31,13 +31,20 @@ public class EmailTemplateBuilder
     /// <summary>
     /// Builds a payment-related email
     /// </summary>
-    public string BuildPaymentEmail(PaymentEmailData data, string ctaButtonText, string ctaButtonUrl)
+    public string BuildPaymentEmail(
+        PaymentEmailData data,
+        string ctaButtonText,
+        string ctaButtonUrl,
+        string? secondaryCtaText = null,
+        string? secondaryCtaUrl = null)
     {
         return BuildEmail(
             header: BuildPaymentHeader(data),
             content: BuildPaymentContent(data),
             mainCta: (ctaButtonText, BuildAbsoluteUrl(ctaButtonUrl)),
-            secondaryCta: ("View Activity", BuildAbsoluteUrl($"/activities/{data.ActivityId}"))
+            secondaryCta: secondaryCtaText != null && secondaryCtaUrl != null
+                ? (secondaryCtaText, BuildAbsoluteUrl(secondaryCtaUrl))
+                : null
         );
     }
 

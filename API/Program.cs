@@ -19,12 +19,17 @@ using Persistence.Repositories;
 using System.Text.Json.Serialization;
 using API.Services;
 using DotNetEnv;
+using Application.Receipts;
+using QuestPDF.Infrastructure;
 
 // Load .env file before configuration is built (Development only)
 if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), ".env")))
 {
     Env.Load();
 }
+
+// QuestPDF community license (required at startup before any PDF is generated)
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -73,6 +78,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 builder.Services.AddSingleton(sp => sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<SmtpSettings>>().Value);
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddSingleton<IReceiptPdfGenerator, ReceiptPdfGenerator>();
 builder.Services.AddScoped<IActivityRepository, ActivityRepository>();
 builder.Services.AddScoped<IActivityReviewRepository, ActivityReviewRepository>();
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();

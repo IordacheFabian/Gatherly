@@ -474,7 +474,7 @@ const HostDashboard = () => {
               Host Analytics
             </span>
             <h1 className="text-3xl md:text-4xl font-display font-bold">
-              Broker-style <span className="gradient-text">host dashboard</span>
+              {user?.displayName ?? ""}'s <span className="gradient-text">dashboard</span>
             </h1>
             <p className="text-muted-foreground mt-3 max-w-2xl">
               Real-time portfolio view for bookings, revenue, attendance, and growth.
