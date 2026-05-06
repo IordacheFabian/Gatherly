@@ -1,6 +1,7 @@
 using API.DTOs;
 using Application.Core;
 using Application.Interfaces;
+using Domain;
 using Application.Interfaces.IRepository;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
@@ -80,7 +81,7 @@ public class GetRecommendedActivities
                 .Select(x => x.ActivityId!)
                 .ToHashSetAsync(cancellationToken);
 
-            var categoryWeights = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var categoryWeights = new Dictionary<ActivityCategory, int>();
 
             foreach (var category in approvedBookingHistory.Select(x => x.Category))
             {
@@ -163,7 +164,7 @@ public class GetRecommendedActivities
             Candidate candidate,
             DateTime now,
             HashSet<string> followedHostIds,
-            Dictionary<string, int> categoryWeights,
+            Dictionary<ActivityCategory, int> categoryWeights,
             (double Latitude, double Longitude)? anchor)
         {
             var score = 0;
@@ -227,13 +228,8 @@ public class GetRecommendedActivities
             return (avgLat, avgLon);
         }
 
-        private static void AddCategoryWeight(Dictionary<string, int> weights, string category, int increment)
+        private static void AddCategoryWeight(Dictionary<ActivityCategory, int> weights, ActivityCategory category, int increment)
         {
-            if (string.IsNullOrWhiteSpace(category))
-            {
-                return;
-            }
-
             if (weights.TryGetValue(category, out var current))
             {
                 weights[category] = current + increment;
@@ -263,7 +259,7 @@ public class GetRecommendedActivities
         private sealed class Candidate
         {
             public required string Id { get; set; }
-            public required string Category { get; set; }
+            public ActivityCategory Category { get; set; }
             public string? HostId { get; set; }
             public DateTime Date { get; set; }
             public double Latitude { get; set; }
@@ -273,7 +269,7 @@ public class GetRecommendedActivities
 
         private sealed class BookingHistoryPoint
         {
-            public required string Category { get; set; }
+            public ActivityCategory Category { get; set; }
             public DateTime Date { get; set; }
             public double Latitude { get; set; }
             public double Longitude { get; set; }

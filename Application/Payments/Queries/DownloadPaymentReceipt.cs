@@ -88,7 +88,7 @@ public class DownloadPaymentReceipt
                 Venue = payment.Venue,
                 City = payment.City,
                 HostName = payment.HostDisplayName,
-                Category = payment.ActivityCategory,
+                Category = payment.ActivityCategory.ToString(),
                 Amount = payment.Amount,
                 Currency = payment.Currency,
                 StatusLabel = statusLabel,

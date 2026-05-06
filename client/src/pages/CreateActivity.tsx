@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import PageTransition from "@/components/PageTransition";
 import { activitiesApi, profilesApi } from "@/lib/api";
 import { categoryOptions } from "@/lib/activity-view";
+import type { ActivityCategory } from "@/lib/types";
 import { getErrorMessage } from "@/lib/error-utils";
 
 type GeoSuggestion = {
@@ -274,7 +275,7 @@ const CreateActivity = () => {
       const payload = {
         title: formData.title,
         description: formData.description,
-        category: formData.category,
+        category: formData.category as ActivityCategory,
         date: new Date(formData.date).toISOString(),
         city: formData.city,
         venue: formData.venue,
@@ -365,7 +366,7 @@ const CreateActivity = () => {
                   className="w-full bg-muted/30 border border-glass-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:ring-1 focus:ring-primary/50"
                 >
                   <option value="">Select a category</option>
-                  {categoryOptions.filter((c) => c !== "All").map((c) => (
+                  {categoryOptions.map((c) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>

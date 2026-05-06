@@ -17,7 +17,7 @@ public class BaseActivityValidator<T, TDto>
         RuleFor(x => selector(x).Date)
             .GreaterThan(DateTime.UtcNow).WithMessage("Date must be in the future.");
         RuleFor(x => selector(x).Category)
-            .NotEmpty().WithMessage("Category is required.");
+            .IsInEnum().WithMessage("A valid category is required.");
         RuleFor(x => selector(x).City)
             .NotEmpty().WithMessage("City is required.");
         RuleFor(x => selector(x).Venue)

@@ -44,7 +44,7 @@ const Index = () => {
       new Set(activities.map((a) => a.category.trim()).filter(Boolean)),
     );
 
-    const merged = new Set<string>(["All", ...fromActivities, ...categoryOptions.filter((c) => c !== "All")]);
+    const merged = new Set<string>(["All", ...fromActivities, ...categoryOptions]);
     return Array.from(merged);
   }, [activities]);
 
@@ -54,8 +54,6 @@ const Index = () => {
   );
 
   const filtered = useMemo(() => {
-    const normalizedCategory = activeCategory.toLowerCase();
-
     const result = activities.filter((a) => {
       const matchesSearch =
         a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -63,7 +61,7 @@ const Index = () => {
         a.venue.toLowerCase().includes(searchQuery.toLowerCase()) ||
         a.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCat =
-        activeCategory === "All" || a.category.toLowerCase() === normalizedCategory;
+        activeCategory === "All" || a.category === activeCategory;
       const matchesCity = cityFilter === "All" || a.city.toLowerCase() === cityFilter.toLowerCase();
       const matchesDate = !dateFilter || a.date.slice(0, 10) === dateFilter;
       const matchesRating = a.ratingAverage >= Number(minRating);

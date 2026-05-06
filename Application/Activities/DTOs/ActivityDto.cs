@@ -10,7 +10,7 @@ public class ActivityDto
     public required string Title { get; set; }
     public DateTime Date { get; set; }
     public required string Description { get; set; }
-    public required string Category { get; set; }
+    public ActivityCategory Category { get; set; }
     public bool IsCancelled { get; set; }
     public int MaxParticipants { get; set; }
     public DateTime? BookingDeadline { get; set; }

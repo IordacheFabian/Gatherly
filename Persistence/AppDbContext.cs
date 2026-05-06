@@ -158,6 +158,10 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User>(op
             .HasForeignKey(x => x.ActivityId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.Entity<Activity>()
+            .Property(x => x.Category)
+            .HasConversion<string>();
+
         var dateTimeConverter = new ValueConverter<DateTime, DateTime>(
             v => v.ToUniversalTime(),
 

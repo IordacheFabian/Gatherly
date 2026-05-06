@@ -7,6 +7,22 @@ export type BookingStatus =
   | "Rejected"
   | "Cancelled";
 
+export type ActivityCategory =
+  | "Fitness"
+  | "Learning"
+  | "Social"
+  | "Creative"
+  | "Wellness"
+  | "Entertainment"
+  | "Outdoor"
+  | "Food"
+  | "Productivity"
+  | "Technology"
+  | "Travel"
+  | "Family"
+  | "Relaxation"
+  | "Adventure";
+
 export interface ActivityBooking {
   user: UserProfile;
   isHost: boolean;
@@ -19,7 +35,7 @@ export interface Activity {
   id: string;
   title: string;
   description: string;
-  category: string;
+  category: ActivityCategory;
   date: string;
   isCancelled: boolean;
   maxParticipants: number;
@@ -56,7 +72,7 @@ export interface WishlistGroup {
 export interface BaseActivityForm {
   title: string;
   description: string;
-  category: string;
+  category: ActivityCategory;
   date: string;
   city: string;
   venue: string;
