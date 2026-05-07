@@ -61,6 +61,7 @@ public class NotificationService(
             Message = notification.Message,
             CreatedAt = notification.CreatedAt,
             IsRead = notification.IsRead,
+            ActorUserId = notification.ActorUserId,
             ActivityId = notification.ActivityId,
             CommentId = notification.CommentId,
         };

@@ -93,6 +93,8 @@ const Navbar = () => {
 
   const resolveNotificationTarget = (notification: Notification): string | null => {
     switch (notification.type) {
+      case "NewFollower":
+        return notification.actorUserId ? `/profile/${notification.actorUserId}` : null;
       case "CommentReply":
         if (notification.activityId && notification.commentId) {
           return `/activity/${notification.activityId}?commentId=${encodeURIComponent(notification.commentId)}`;

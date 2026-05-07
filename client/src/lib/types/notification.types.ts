@@ -14,6 +14,7 @@ export interface Notification {
   message: string;
   createdAt: string;
   isRead: boolean;
+  actorUserId?: string | null;
   activityId?: string | null;
   commentId?: string | null;
 }
