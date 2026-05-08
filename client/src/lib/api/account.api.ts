@@ -1,37 +1,55 @@
 import type { LoginForm, RegisterForm, UserInfo } from "@/lib/types";
-import { API_BASE, request } from "./base";
+import { apiClient, getApiErrorMessage } from "./client";
 
 export const accountApi = {
-  register: (data: RegisterForm) =>
-    request<void>("/api/account/register", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
-  login: (data: LoginForm) =>
-    request<void>("/api/account/login", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
-  confirmEmail: (userId: string, token: string) =>
-    request<{ message: string }>("/api/account/confirm-email", {
-      method: "POST",
-      body: JSON.stringify({ userId, token }),
-    }),
-  deleteAccount: (password: string) =>
-    request<{ message: string }>("/api/account/delete-account", {
-      method: "POST",
-      body: JSON.stringify({ password }),
-    }),
-  logout: () =>
-    request<void>("/api/account/logout", {
-      method: "POST",
-    }),
-  getUserInfo: async () => {
-    const response = await fetch(`${API_BASE}/api/account/user-info`, {
-      credentials: "include",
-    });
-    if (response.status === 204) return null;
-    if (!response.ok) return null;
-    return (await response.json()) as UserInfo;
+  register: async (data: RegisterForm): Promise<void> => {
+    try {
+      await apiClient.post("/api/account/register", data);
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, "Registration failed"));
+    }
+  },
+
+  login: async (data: LoginForm): Promise<void> => {
+    try {
+      await apiClient.post("/api/account/login", data);
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, "Login failed"));
+    }
+  },
+
+  confirmEmail: async (userId: string, token: string): Promise<{ message: string }> => {
+    try {
+      const { data } = await apiClient.post<{ message: string }>("/api/account/confirm-email", { userId, token });
+      return data;
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, "Email confirmation failed"));
+    }
+  },
+
+  deleteAccount: async (password: string): Promise<{ message: string }> => {
+    try {
+      const { data } = await apiClient.post<{ message: string }>("/api/account/delete-account", { password });
+      return data;
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, "Failed to delete account"));
+    }
+  },
+
+  logout: async (): Promise<void> => {
+    try {
+      await apiClient.post("/api/account/logout");
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, "Logout failed"));
+    }
+  },
+
+  getUserInfo: async (): Promise<UserInfo | null> => {
+    try {
+      const { data } = await apiClient.get<UserInfo>("/api/account/user-info");
+      return data ?? null;
+    } catch {
+      return null;
+    }
   },
 };
