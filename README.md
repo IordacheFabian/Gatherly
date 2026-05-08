@@ -83,9 +83,9 @@ Reactivities is more than a CRUD app. It's a **professional-grade social activit
 <td>
 
 ### 🔮 Coming Soon
-- 🔲 Email notifications
+- ✅ Email notifications
+- ✅ Activity recommendations
 - 🔲 Admin dashboard
-- 🔲 Activity recommendations
 - 🔲 Mobile support
 
 </td>
@@ -211,7 +211,7 @@ RuleFor(x => x.Date).GreaterThan(DateTime.Now);
 ```
 1. 📝  User fills out the form in React
 2. 📤  Axios sends POST /api/activities
-3. 🛡️  JWT middleware validates the token
+3. 🍪  Cookie middleware validates the session
 4. 🎯  Controller dispatches MediatR command
 5. ⚙️  Handler executes business logic
 6. 💾  EF Core persists to the database
@@ -225,7 +225,8 @@ RuleFor(x => x.Date).GreaterThan(DateTime.Now);
 ## 🚀 Core Features
 
 ### 🔑 Authentication
-- Register · Login · JWT tokens
+- Register · Login · Cookie-based sessions
+- Email confirmation required before login
 - Protected routes on frontend
 - Persistent auth state
 
@@ -262,15 +263,15 @@ RuleFor(x => x.Date).GreaterThan(DateTime.Now);
 
 ```
 1. 🧑  User submits credentials
-2. 🔍  ASP.NET Identity validates
-3. 🔑  JWT token generated & returned
-4. 💾  Frontend stores token securely
-5. 📎  Token attached to every request
-6. 🛡️  Protected endpoints verify token
-7. 👮  Policy/role checks enforced
+2. 🔍  ASP.NET Identity validates email + password
+3. ✉️  Email must be confirmed before login is allowed
+4. 🍪  PasswordSignInAsync sets a persistent cookie
+5. 📎  Cookie is sent automatically on every request
+6. 🛡️  Protected endpoints verify the session cookie
+7. 👮  Policy checks enforced (e.g. IsActivityHost)
 ```
 
-**Token payload includes:** username · email · display name · profile image
+**Session includes:** username · email · display name · profile image
 
 ---
 
@@ -378,10 +379,12 @@ SignalR powers the live experience:
 ├── 🔒 Infrastructure/         → Photos, Security
 └── 🖥️  client/                → React + TypeScript Frontend
     └── src/
-        ├── app/               → Global config, layout, stores
-        ├── features/          → Feature-based components
-        ├── lib/               → Utilities, hooks
-        └── api/               → Axios agents
+        ├── pages/             → Route-level page components
+        ├── components/        → Shared UI components
+        ├── lib/               → Hooks, api clients, types, utils
+        │   └── api/           → Axios agents (per domain)
+        ├── hooks/             → Custom React hooks
+        └── data/              → Static/seed data
 ```
 
 ---
@@ -434,7 +437,19 @@ npm run dev     # or: bun dev
 **Backend** — `appsettings.Development.json`:
 ```json
 {
-  "TokenKey": "your-super-secret-jwt-key",
+  "AppSettings": {
+    "ClientBaseUrl": "http://localhost:5173"
+  },
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source=reactivities.db"
+  },
+  "SmtpSettings": {
+    "Host": "smtp.gmail.com",
+    "Port": 587,
+    "UserName": "your-email@gmail.com",
+    "Password": "your-app-password",
+    "FromEmail": "your-email@gmail.com"
+  },
   "Cloudinary": {
     "CloudName": "your-cloud-name",
     "ApiKey": "your-api-key",
@@ -443,10 +458,7 @@ npm run dev     # or: bun dev
 }
 ```
 
-**Frontend** — `.env.local`:
-```env
-VITE_API_URL=https://localhost:5001/api
-```
+> 💡 The frontend uses relative URLs proxied by Vite — no separate API URL env variable needed in development.
 
 ---
 
@@ -464,14 +476,14 @@ VITE_API_URL=https://localhost:5001/api
 ## 🔒 Security Considerations
 
 ### ✅ Implemented
-- JWT authentication with expiry
+- Cookie-based session authentication (persistent)
+- Email confirmation required on registration
 - ASP.NET Identity password hashing
-- Authorization policies on endpoints
+- Authorization policies on endpoints (e.g. `IsActivityHost`)
 - FluentValidation at API boundary
 - HTTPS enforcement
 
 ### 🔲 Planned
-- Refresh token rotation
 - Rate limiting
 - Security response headers
 - Role-based access control (RBAC)
@@ -484,10 +496,9 @@ VITE_API_URL=https://localhost:5001/api
 
 ### 🌟 Platform Features
 ```
-📧 Email notifications          🗓️ Calendar integration
-🔍 Advanced activity search     📊 Admin analytics dashboard
-📱 Mobile-responsive design     🤖 Activity recommendations
-🏷️  Tagging system              🗺️  Map-based activity discovery
+� Admin analytics dashboard    🗓️ Calendar integration
+🔍 Advanced activity search     🏷️  Tagging system
+📱 Mobile-responsive design     🗺️  Map-based activity discovery
 ```
 
 ### ⚙️ Technical Improvements
