@@ -135,11 +135,11 @@ const Navbar = () => {
       <div className="container mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 group">
-          <div className="w-9 h-9 rounded-lg gradient-primary flex items-center justify-center glow-primary transition-all duration-300 group-hover:scale-110">
-            <Compass className="w-5 h-5 text-primary-foreground" />
+          <div className="w-9 h-9 rounded-lg overflow-hidden flex items-center justify-center transition-all duration-300 group-hover:scale-110">
+            <img src="/favicon.ico" alt="Gatherly-logo" className="w-full h-full object-contain" />
           </div>
           <span className="font-display font-bold text-lg gradient-text">
-            Reactivities
+            Gatherly
           </span>
         </Link>
 

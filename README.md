@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⚡ Reactivities
+# <img src="client/public/icon.png" alt="Gatherly logo" width="120" />
 
 ### 🌐 Enterprise-Grade Social Activities Platform
 
@@ -16,7 +16,7 @@
 
 ---
 
-Reactivities is more than a CRUD app. It's a **professional-grade social activities platform** built to demonstrate what real-world enterprise software looks like from the ground up — clean, scalable, and production-minded.
+Gatherly is more than a CRUD app. It's a **professional-grade social activities platform** built to demonstrate what real-world enterprise software looks like from the ground up — clean, scalable, and production-minded.
 
 ---
 
