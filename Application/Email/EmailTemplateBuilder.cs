@@ -56,14 +56,14 @@ public class EmailTemplateBuilder
         var header = $@"
 <div class=""email-header"" style=""background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"">
     <div style=""font-size: 48px; margin-bottom: 10px;"">✉️</div>
-    <h1 style=""margin: 0 0 8px 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;"">Reactivities</h1>
+    <h1 style=""margin: 0 0 8px 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;"">Gatherly</h1>
     <p class=""tagline"">One step away from the community 🎉</p>
 </div>";
 
         var content = $@"
 <p class=""greeting"">Hi <strong>{displayName}</strong>,</p>
 
-<p class=""content"">Welcome aboard! We're thrilled to have you join <strong>Reactivities</strong> — the place to discover and create amazing activities with people around you.</p>
+<p class=""content"">Welcome aboard! We're thrilled to have you join <strong>Gatherly</strong> — the place to discover and create amazing activities with people around you.</p>
 
 <div style=""background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%); border: 1px solid #e0e7ff; border-radius: 12px; padding: 28px; margin: 24px 0; text-align: center;"">
     <div style=""font-size: 36px; margin-bottom: 12px;"">🔐</div>
@@ -116,7 +116,7 @@ public class EmailTemplateBuilder
 <head>
     <meta charset=""UTF-8"">
     <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>Reactivities</title>
+    <title>Gatherly</title>
     <style>
         body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -318,7 +318,7 @@ public class EmailTemplateBuilder
     {
         return $@"
 <div class=""email-header"">
-    <h1>Reactivities</h1>
+    <h1>Gatherly</h1>
     <p class=""tagline"">Your activity booking confirmed ✓</p>
 </div>";
     }
@@ -327,7 +327,7 @@ public class EmailTemplateBuilder
     {
         return $@"
 <div class=""email-header"">
-    <h1>Reactivities</h1>
+    <h1>Gatherly</h1>
     <p class=""tagline"">Payment Confirmation ✓</p>
 </div>";
     }
@@ -336,7 +336,7 @@ public class EmailTemplateBuilder
     {
         return $@"
 <div class=""email-header"">
-    <h1>Reactivities</h1>
+    <h1>Gatherly</h1>
     <p class=""tagline"">{data.Title}</p>
 </div>";
     }
@@ -458,7 +458,7 @@ public class EmailTemplateBuilder
     {
         return $@"
 <div class=""email-footer"">
-    <p style=""margin: 0 0 10px 0; font-weight: 600; color: #333;"">Reactivities</p>
+    <p style=""margin: 0 0 10px 0; font-weight: 600; color: #333;"">Gatherly</p>
     <p style=""margin: 0 0 15px 0; font-size: 12px; color: #999;"">
         Discover and join amazing activities in your community.
     </p>
@@ -469,7 +469,7 @@ public class EmailTemplateBuilder
     </div>
     <div class=""divider""></div>
     <p style=""margin: 10px 0 0 0; font-size: 11px; color: #999;"">
-        © 2026 Reactivities. All rights reserved.
+        © 2026 Gatherly. All rights reserved.
     </p>
 </div>";
     }

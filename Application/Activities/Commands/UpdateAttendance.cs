@@ -99,6 +99,7 @@ public class UpdateAttendance
                         booking.Status = newStatus;
                         booking.StatusUpdatedAt = DateTime.UtcNow;
                         sendBookingConfirmationEmail = newStatus == BookingStatus.Approved;
+                        sendBookingRequestEmail = newStatus == BookingStatus.Pending;
                         notifyHostAboutBookingSubmission = true;
                         hostNotificationMessage = BuildHostBookingMessage(user.DisplayName, activity.Title, newStatus);
                     }

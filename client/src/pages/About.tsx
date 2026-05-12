@@ -89,7 +89,7 @@ const About = () => {
             <span className="gradient-text">Together</span>
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            Reactivities was born from a simple belief: the best moments in life are shared.
+            Gatherly was born from a simple belief: the best moments in life are shared.
             We're building the platform where people come together to discover new passions,
             forge real connections, and create unforgettable memories.
           </p>

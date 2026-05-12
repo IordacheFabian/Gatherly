@@ -40,7 +40,7 @@ public class AccountController(
             {
                 await emailService.SendEmailAsync(
                     user.Email!,
-                    "Confirm Your Email – Welcome to Reactivities!",
+                    "Confirm Your Email – Welcome to Gatherly!",
                     htmlBody);
             }
             catch (Exception ex)
@@ -140,7 +140,7 @@ public class AccountController(
     <body style='font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px;'>
         <div style='max-width: 600px; margin: 0 auto; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,0.08);'>
             <div style='background: linear-gradient(135deg, #ef4444 0%, #f97316 100%); color: white; text-align: center; padding: 28px 20px;'>
-                <h2 style='margin: 0;'>Reactivities</h2>
+                <h2 style='margin: 0;'>Gatherly</h2>
             </div>
             <div style='padding: 28px;'>
                 <p style='margin-top: 0;'>Goodbye, dear <strong>{displayName}</strong>,</p>
@@ -158,7 +158,7 @@ public class AccountController(
                 {
                         if (!string.IsNullOrWhiteSpace(email))
                         {
-                                await emailService.SendEmailAsync(email, "Goodbye from Reactivities", goodbyeEmailHtml);
+                                await emailService.SendEmailAsync(email, "Goodbye from Gatherly", goodbyeEmailHtml);
                         }
                 }
                 catch (Exception ex)

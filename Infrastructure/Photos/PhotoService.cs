@@ -47,7 +47,7 @@ public class PhotoService : IPhotoService
             {
                 File = new FileDescription(file.FileName, stream),
                 // Transformation = new Transformation().Height(500).Width(500).Crop("fill")
-                Folder = "Reactivities2025"
+                Folder = "Gatherly2025"
             };
 
             var uploadResult = await _cloudinary.UploadAsync(uploadParams);

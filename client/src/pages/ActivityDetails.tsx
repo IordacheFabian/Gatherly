@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -14,46 +14,62 @@ import {
   Bookmark,
   ListPlus,
 } from "lucide-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import PageTransition from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
-import { activitiesApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { createCommentsHub } from "@/lib/commentsHub";
-import type { Comment } from "@/lib/types";
-import { getActivityImage, isUserAttending, isUserHost } from "@/lib/activity-view";
-import { toast } from "@/components/ui/sonner";
+import { getActivityImage } from "@/lib/activity-view";
+import { useActivityDetails } from "@/hooks/useActivityDetails";
+import { useActivityComments } from "@/hooks/useActivityComments";
 
 const ActivityDetails = () => {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [commentBody, setCommentBody] = useState("");
-  const [replyTo, setReplyTo] = useState<Comment | null>(null);
-  const [sendingComment, setSendingComment] = useState(false);
-  const [reviewRating, setReviewRating] = useState(5);
-  const [reviewBody, setReviewBody] = useState("");
-  const [wishlistName, setWishlistName] = useState("");
   const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
-  const hubRef = useRef<ReturnType<typeof createCommentsHub> | null>(null);
   const highlightedCommentTimerRef = useRef<number | null>(null);
 
-  const activityQuery = useQuery({
-    queryKey: ["activity", id],
-    queryFn: () => activitiesApi.details(id!),
-    enabled: Boolean(id),
-  });
+  const {
+    activityQuery,
+    activity,
+    reviews,
+    myReview,
+    currentWishlistNames,
+    host,
+    joined,
+    currentStatus,
+    canReview,
+    reviewAccessMessage,
+    bookingActionLabel,
+    priceLabel,
+    pendingBookings,
+    reviewRating,
+    setReviewRating,
+    reviewBody,
+    setReviewBody,
+    wishlistName,
+    setWishlistName,
+    attendMutation,
+    approveMutation,
+    rejectMutation,
+    deleteMutation,
+    checkoutMutation,
+    reviewMutation,
+    toggleSavedMutation,
+    addToWishlistMutation,
+    removeFromWishlistMutation,
+  } = useActivityDetails(id, user);
 
-  const activity = activityQuery.data;
-
-  useEffect(() => {
-    if (!id || !user) return;
-    void activitiesApi.trackView(id);
-  }, [id, user]);
+  const {
+    comments,
+    commentBody,
+    setCommentBody,
+    replyTo,
+    setReplyTo,
+    sendingComment,
+    sendComment,
+    handleCommentKeyDown,
+  } = useActivityComments(id, user?.id);
 
   useEffect(() => {
     return () => {
@@ -62,50 +78,6 @@ const ActivityDetails = () => {
       }
     };
   }, []);
-
-  const reviewsQuery = useQuery({
-    queryKey: ["activity-reviews", id],
-    queryFn: () => activitiesApi.getReviews(id!, 100),
-    enabled: Boolean(id),
-  });
-
-  const wishlistsQuery = useQuery({
-    queryKey: ["wishlists"],
-    queryFn: () => activitiesApi.getWishlists(),
-    enabled: Boolean(id && user),
-  });
-  const reviews = reviewsQuery.data ?? [];
-  const myReview = reviews.find((x) => x.reviewerUserId === user?.id);
-  const currentWishlistNames =
-    wishlistsQuery.data
-      ?.filter((group) => group.activities.some((a) => a.id === id))
-      .map((group) => group.name) ?? [];
-
-  useEffect(() => {
-    if (!myReview) return;
-    setReviewRating(myReview.rating);
-    setReviewBody(myReview.body);
-  }, [myReview]);
-
-  useEffect(() => {
-    if (!id || !user) return;
-
-    const hub = createCommentsHub(id);
-    hubRef.current = hub;
-    const cleanupLoad = hub.onLoadComments((loaded) => setComments(loaded));
-    const cleanupReceive = hub.onReceiveComment((comment) => {
-      setComments((prev) => [comment, ...prev]);
-    });
-
-    void hub.start();
-
-    return () => {
-      cleanupLoad();
-      cleanupReceive();
-      hubRef.current = null;
-      void hub.stop();
-    };
-  }, [id, user]);
 
   useEffect(() => {
     const commentId = searchParams.get("commentId");
@@ -135,109 +107,6 @@ const ActivityDetails = () => {
     }, 2500);
   }, [comments, searchParams]);
 
-  const attendMutation = useMutation({
-    mutationFn: () => activitiesApi.toggleAttendance(id!),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["activity", id] });
-      await queryClient.invalidateQueries({ queryKey: ["activities"] });
-    },
-  });
-
-  const approveMutation = useMutation({
-    mutationFn: (userId: string) => activitiesApi.approveBooking(id!, userId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["activity", id] });
-      await queryClient.invalidateQueries({ queryKey: ["activities"] });
-    },
-  });
-
-  const rejectMutation = useMutation({
-    mutationFn: (userId: string) => activitiesApi.rejectBooking(id!, userId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["activity", id] });
-      await queryClient.invalidateQueries({ queryKey: ["activities"] });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: () => activitiesApi.remove(id!),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["activities"] });
-      navigate("/");
-    },
-  });
-
-  const checkoutMutation = useMutation({
-    mutationFn: () => activitiesApi.mockCheckout(id!),
-    onSuccess: async (session) => {
-      await queryClient.invalidateQueries({ queryKey: ["activity", id] });
-      await queryClient.invalidateQueries({ queryKey: ["activities"] });
-      await queryClient.invalidateQueries({ queryKey: ["payments", "history"] });
-      toast.success(`Mock Stripe checkout succeeded. Receipt ${session.paymentId.slice(0, 8)} created.`);
-    },
-  });
-
-  const reviewMutation = useMutation({
-    mutationFn: () => activitiesApi.addOrUpdateReview(id!, { rating: reviewRating, body: reviewBody.trim() }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["activity-reviews", id] });
-      await queryClient.invalidateQueries({ queryKey: ["activity", id] });
-      await queryClient.invalidateQueries({ queryKey: ["activities"] });
-      await queryClient.invalidateQueries({ queryKey: ["profile", activity?.hostId] });
-    },
-  });
-
-  const toggleSavedMutation = useMutation({
-    mutationFn: () => activitiesApi.toggleSaved(id!),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["activity", id] });
-      await queryClient.invalidateQueries({ queryKey: ["activities"] });
-      await queryClient.invalidateQueries({ queryKey: ["saved-activities"] });
-      await queryClient.invalidateQueries({ queryKey: ["wishlists"] });
-    },
-  });
-
-  const addToWishlistMutation = useMutation({
-    mutationFn: (name: string) => activitiesApi.addToWishlist(id!, name),
-    onSuccess: async () => {
-      setWishlistName("");
-      await queryClient.invalidateQueries({ queryKey: ["activity", id] });
-      await queryClient.invalidateQueries({ queryKey: ["wishlists"] });
-    },
-  });
-
-  const removeFromWishlistMutation = useMutation({
-    mutationFn: (name: string) => activitiesApi.removeFromWishlist(id!, name),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["activity", id] });
-      await queryClient.invalidateQueries({ queryKey: ["wishlists"] });
-    },
-  });
-
-  const sendComment = async () => {
-    if (!hubRef.current || !commentBody.trim()) return;
-
-    setSendingComment(true);
-    try {
-      await hubRef.current.start();
-      await hubRef.current.sendComment(commentBody.trim(), replyTo?.id);
-      setCommentBody("");
-      setReplyTo(null);
-    } finally {
-      setSendingComment(false);
-    }
-  };
-
-  const handleCommentKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key !== "Enter") return;
-
-    e.preventDefault();
-
-    if (!sendingComment && commentBody.trim()) {
-      void sendComment();
-    }
-  };
-
   if (activityQuery.isLoading) {
     return (
       <PageTransition>
@@ -259,32 +128,7 @@ const ActivityDetails = () => {
     );
   }
 
-  const host = isUserHost(activity, user?.id);
-  const joined = isUserAttending(activity, user?.id);
   const mapQuery = encodeURIComponent(`${activity.venue}, ${activity.city}`);
-  const currentStatus = activity.currentUserBookingStatus;
-  const canReview = Boolean(!host && user && currentStatus === "Approved" && new Date(activity.date).getTime() <= Date.now());
-  const pendingBookings = activity.bookings.filter((b) => !b.isHost && (b.status === "Pending" || b.status === "Waitlisted"));
-  const reviewAccessMessage = (() => {
-    if (!user) return "Log in to leave a review after you attend this activity.";
-    if (host) return "Hosts cannot review their own activities.";
-    if (currentStatus !== "Approved") return "Only approved attendees can leave a review.";
-    if (new Date(activity.date).getTime() > Date.now()) return "Reviews open after the activity ends.";
-    return null;
-  })();
-
-  const bookingActionLabel = (() => {
-    if (!currentStatus) return activity.isPaid ? "Pay & reserve spot" : "Request booking";
-    if (currentStatus === "Pending" || currentStatus === "Waitlisted" || currentStatus === "Approved") {
-      return "Cancel booking";
-    }
-
-    return "Request booking again";
-  })();
-
-  const priceLabel = activity.isPaid
-    ? `${new Intl.NumberFormat("en-US", { style: "currency", currency: activity.currency }).format(activity.priceAmount)} per booking`
-    : "Free activity";
 
   return (
     <PageTransition>

@@ -230,7 +230,7 @@ public class ReceiptPdfGenerator : IReceiptPdfGenerator
             // Thank-you note
             col.Item().PaddingTop(10).Background(CardBg).Padding(12).Column(c =>
             {
-                c.Item().Text("Thank you for choosing Reactivities!").FontSize(11).Bold().FontColor(PrimaryColor);
+                c.Item().Text("Thank you for choosing Gatherly!").FontSize(11).Bold().FontColor(PrimaryColor);
                 c.Item().PaddingTop(3).Text(data.Kind == ReceiptKind.Payment
                     ? "This receipt confirms your payment. Please keep it for your records."
                     : "This document confirms your booking. Please keep it for your records.")

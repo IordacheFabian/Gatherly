@@ -62,7 +62,7 @@ const ConfirmEmail = () => {
                 Email confirmed!
               </h1>
               <p className="text-muted-foreground mb-8">
-                Your account is now active. Welcome to Reactivities — you can log in and start
+                Your account is now active. Welcome to Gatherly — you can log in and start
                 exploring activities.
               </p>
               <Button asChild className="gradient-primary text-primary-foreground border-0 gap-2">

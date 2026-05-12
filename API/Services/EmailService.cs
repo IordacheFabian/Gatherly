@@ -134,7 +134,7 @@ public class EmailService(
     private static readonly Dictionary<EmailScenario, ScenarioConfig> Scenarios = new()
     {
         [EmailScenario.BookingRequest] = new(
-            Subject: "Booking Request Received - Reactivities",
+            Subject: "Booking Request Received - Gatherly",
             StatusBadge: "Pending Approval",
             StatusBadgeColor: "#f59e0b",
             Message: _ => "Your booking request has been received! The activity host will review your request and send you a confirmation or rejection soon.",
@@ -144,7 +144,7 @@ public class EmailService(
             Attachment: ReceiptAttachmentMode.None),
 
         [EmailScenario.BookingApproved] = new(
-            Subject: "Booking Approved! - Reactivities",
+            Subject: "Booking Approved! - Gatherly",
             StatusBadge: "Approved",
             StatusBadgeColor: "#10b981",
             Message: _ => "Great news! Your booking has been approved. You're all set to join this activity!",
@@ -157,7 +157,7 @@ public class EmailService(
             ReceiptStatusLabel: "Approved"),
 
         [EmailScenario.ActivityJoined] = new(
-            Subject: "You've Joined an Activity! - Reactivities",
+            Subject: "You've Joined an Activity! - Gatherly",
             StatusBadge: "Joined",
             StatusBadgeColor: "#10b981",
             Message: ctx => $"You've successfully joined '{ctx.ActivityTitle}'! We're excited to see you there.",
@@ -168,7 +168,7 @@ public class EmailService(
             ReceiptStatusLabel: "Confirmed"),
 
         [EmailScenario.PaymentSuccessful] = new(
-            Subject: "Payment Successful - Reactivities",
+            Subject: "Payment Successful - Gatherly",
             StatusBadge: "Payment Confirmed",
             StatusBadgeColor: "#10b981",
             Message: _ => "Your payment has been processed successfully. Your booking is confirmed!",
@@ -179,7 +179,7 @@ public class EmailService(
             UsePaymentTemplate: true),
 
         [EmailScenario.PaymentRequired] = new(
-            Subject: "Payment Required - Reactivities",
+            Subject: "Payment Required - Gatherly",
             StatusBadge: "Payment Required",
             StatusBadgeColor: "#f59e0b",
             Message: ctx => $"To complete your booking for '{ctx.ActivityTitle}', payment is required.",
@@ -191,7 +191,7 @@ public class EmailService(
             Attachment: ReceiptAttachmentMode.None),
 
         [EmailScenario.BookingRejected] = new(
-            Subject: "Booking Request Rejected - Reactivities",
+            Subject: "Booking Request Rejected - Gatherly",
             StatusBadge: "Rejected",
             StatusBadgeColor: "#ef4444",
             Message: ctx => $"Unfortunately, your booking request for '{ctx.ActivityTitle}' has been rejected by the host.",
@@ -201,7 +201,7 @@ public class EmailService(
             Attachment: ReceiptAttachmentMode.None),
 
         [EmailScenario.BookingCancelled] = new(
-            Subject: "Booking Cancelled - Reactivities",
+            Subject: "Booking Cancelled - Gatherly",
             StatusBadge: "Cancelled",
             StatusBadgeColor: "#ef4444",
             Message: ctx => $"Your booking for '{ctx.ActivityTitle}' has been cancelled.",

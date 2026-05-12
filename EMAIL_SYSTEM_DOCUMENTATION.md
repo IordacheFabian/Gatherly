@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Reactivities app now includes a modern, production-ready email confirmation system with HTML email templates for various booking and payment scenarios. The system uses:
+The Gatherly app now includes a modern, production-ready email confirmation system with HTML email templates for various booking and payment scenarios. The system uses:
 
 - **MailKit** for SMTP email sending with async/await support
 - **Responsive HTML emails** with inline CSS for maximum email client compatibility
@@ -30,7 +30,7 @@ Configure your SMTP settings in `appsettings.json` or `appsettings.Development.j
     "UserName": "your-email@gmail.com",
     "Password": "your-app-password",
     "FromEmail": "your-email@gmail.com",
-    "FromName": "Reactivities"
+    "FromName": "Gatherly"
   }
 }
 ```
@@ -394,7 +394,7 @@ To add email sending to any handler:
 
 ### Visual Elements
 
-- **Header**: Gradient background with Reactivities branding
+- **Header**: Gradient background with Gatherly branding
 - **Status badges**: Color-coded for quick scanning
   - Green (#10b981): Approved, Joined, Confirmed
   - Amber (#f59e0b): Pending, Required payment
@@ -403,7 +403,7 @@ To add email sending to any handler:
 - **Activity cards**: Activity details in organized layout
 - **Payment cards**: Payment information highlighted
 - **CTAs**: Large clickable buttons with hover effects
-- **Footer**: Reactivities branding, links to app sections
+- **Footer**: Gatherly branding, links to app sections
 
 ### Inline CSS
 

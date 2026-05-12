@@ -43,7 +43,7 @@ public class ReceiptData
     public DateTime? RefundedAt { get; set; }
 
     // Branding
-    public string AppName { get; set; } = "Reactivities";
+    public string AppName { get; set; } = "Gatherly";
     public string AppTagline { get; set; } = "Discover. Connect. Activate.";
-    public string SupportEmail { get; set; } = "support@reactivities.app";
+    public string SupportEmail { get; set; } = "support@gatherly.app";
 }

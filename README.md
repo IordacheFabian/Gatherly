@@ -361,7 +361,7 @@ SignalR powers the live experience:
 ## 📁 Folder Structure
 
 ```
-📦 Reactivities/
+📦 Gatherly/
 ├── 🌐 API/                    → Controllers, Middleware, SignalR Hubs
 │   ├── Controllers/
 │   ├── SignalR/
@@ -404,7 +404,7 @@ SignalR powers the live experience:
 ```bash
 # Clone the repository
 git clone https://github.com/IordacheFabian/Reactivities.git
-cd Reactivities
+cd Gatherly
 
 # Restore packages
 dotnet restore
@@ -441,7 +441,7 @@ npm run dev     # or: bun dev
     "ClientBaseUrl": "http://localhost:5173"
   },
   "ConnectionStrings": {
-    "DefaultConnection": "Data Source=reactivities.db"
+    "DefaultConnection": "Data Source=gatherly.db"
   },
   "SmtpSettings": {
     "Host": "smtp.gmail.com",

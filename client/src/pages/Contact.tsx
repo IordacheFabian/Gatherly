@@ -8,7 +8,7 @@ import PageTransition from "@/components/PageTransition";
 
 const faqs = [
   { q: "How do I create an activity?", a: "Click the + button on the activities page, fill in the details, and publish. It's that simple!" },
-  { q: "Is Reactivities free to use?", a: "Yes! Creating an account and joining activities is completely free. Organizers can optionally charge for premium events." },
+  { q: "Is Gatherly free to use?", a: "Yes! Creating an account and joining activities is completely free. Organizers can optionally charge for premium events." },
   { q: "How do I report an issue?", a: "Use the contact form below or email us directly. We typically respond within 24 hours." },
 ];
 
@@ -74,7 +74,7 @@ const Contact = () => {
               <h3 className="font-display font-semibold mb-4">Contact Info</h3>
               <div className="space-y-4">
                 {[
-                  { icon: Mail, label: "info@reactivities.app" },
+                  { icon: Mail, label: "info@gatherly.app" },
                   { icon: Phone, label: "+1 (555) 123-4567" },
                   { icon: MapPin, label: "Romania, AG" },
                 ].map(({ icon: Icon, label }) => (

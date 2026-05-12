@@ -10,5 +10,5 @@ public class SmtpSettings
     public string? UserName { get; set; }
     public string? Password { get; set; }
     public string FromEmail { get; set; } = string.Empty;
-    public string FromName { get; set; } = "Reactivities";
+    public string FromName { get; set; } = "Gatherly";
 }
