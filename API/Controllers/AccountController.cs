@@ -1,62 +1,28 @@
-using System;
 using API.DTOs;
-using Application.Email;
+using Application.Account.Commands;
 using Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Application.Interfaces;
 
 namespace API.Controllers;
 
-public class AccountController(
-    SignInManager<User> signInManager,
-    IEmailService emailService,
-    IConfiguration configuration) : BaseApiController
+public class AccountController(SignInManager<User> signInManager) : BaseApiController
 {
     [AllowAnonymous]
     [HttpPost("register")]
     public async Task<ActionResult> RegisterUser(RegisterDto registerDto)
     {
-        var user = new User
+        var result = await Mediator.Send(new RegisterUser.Command
         {
-            UserName = registerDto.Email,
             Email = registerDto.Email,
+            Password = registerDto.Password,
             DisplayName = registerDto.DisplayName
-        };
+        });
 
-        var result = await signInManager.UserManager.CreateAsync(user, registerDto.Password);
+        if (!result.IsSuccess) return HandleResult(result);
 
-        if (result.Succeeded)
-        {
-            var token = await signInManager.UserManager.GenerateEmailConfirmationTokenAsync(user);
-            var clientBaseUrl = configuration["AppSettings:ClientBaseUrl"] ?? configuration["AppUrl"] ?? "http://localhost:5173";
-            var confirmationUrl = $"{clientBaseUrl.TrimEnd('/')}/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
-
-            var templateBuilder = new EmailTemplateBuilder(clientBaseUrl);
-            var htmlBody = templateBuilder.BuildEmailConfirmationEmail(user.DisplayName, confirmationUrl);
-
-            try
-            {
-                await emailService.SendEmailAsync(
-                    user.Email!,
-                    "Confirm Your Email – Welcome to Gatherly!",
-                    htmlBody);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Email sending failed: {ex.Message}");
-            }
-
-            return Ok(new { message = "Registration successful. Please check your email to confirm your account." });
-        }
-
-        foreach (var error in result.Errors)
-        {
-            ModelState.AddModelError(error.Code, error.Description);
-        }
-
-        return ValidationProblem();
+        return Ok(new { message = "Registration successful. Please check your email to confirm your account." });
     }
 
     [AllowAnonymous]
@@ -83,18 +49,15 @@ public class AccountController(
     [HttpPost("confirm-email")]
     public async Task<ActionResult> ConfirmEmail([FromBody] ConfirmEmailDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.UserId) || string.IsNullOrWhiteSpace(dto.Token))
-            return BadRequest("UserId and token are required.");
+        var result = await Mediator.Send(new ConfirmEmail.Command
+        {
+            UserId = dto.UserId,
+            Token = dto.Token
+        });
 
-        var user = await signInManager.UserManager.FindByIdAsync(dto.UserId);
-        if (user == null)
-            return NotFound("User not found.");
+        if (!result.IsSuccess) return HandleResult(result);
 
-        var result = await signInManager.UserManager.ConfirmEmailAsync(user, dto.Token);
-        if (result.Succeeded)
-            return Ok(new { message = "Email confirmed successfully. You can now log in." });
-
-        return BadRequest("Email confirmation failed. The link may be invalid or expired.");
+        return Ok(new { message = "Email confirmed successfully. You can now log in." });
     }
 
     [AllowAnonymous]
@@ -118,96 +81,23 @@ public class AccountController(
         });
     }
 
-        [HttpPost("delete-account")]
-        public async Task<ActionResult> DeleteAccount([FromBody] DeleteAccountDto dto)
-        {
-                if (string.IsNullOrWhiteSpace(dto.Password))
-                        return BadRequest("Password is required.");
+    [HttpPost("delete-account")]
+    public async Task<ActionResult> DeleteAccount([FromBody] DeleteAccountDto dto)
+    {
+        var result = await Mediator.Send(new DeleteAccount.Command { Password = dto.Password });
 
-                var user = await signInManager.UserManager.GetUserAsync(User);
-                if (user == null)
-                        return Unauthorized();
+        if (!result.IsSuccess) return HandleResult(result);
 
-                var isPasswordValid = await signInManager.UserManager.CheckPasswordAsync(user, dto.Password);
-                if (!isPasswordValid)
-                        return BadRequest("Invalid password.");
+        await signInManager.SignOutAsync();
 
-                var email = user.Email;
-                var displayName = user.DisplayName;
-
-                var goodbyeEmailHtml = $@"
-<html>
-    <body style='font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px;'>
-        <div style='max-width: 600px; margin: 0 auto; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,0.08);'>
-            <div style='background: linear-gradient(135deg, #ef4444 0%, #f97316 100%); color: white; text-align: center; padding: 28px 20px;'>
-                <h2 style='margin: 0;'>Gatherly</h2>
-            </div>
-            <div style='padding: 28px;'>
-                <p style='margin-top: 0;'>Goodbye, dear <strong>{displayName}</strong>,</p>
-                <p>We're sorry to see you leave. Your account has been deleted as requested.</p>
-                <p>We hope we will see again soon.</p>
-                <p style='color: #6b7280; font-size: 13px; margin-top: 24px;'>
-                    If this wasn't you, please contact support immediately.
-                </p>
-            </div>
-        </div>
-    </body>
-</html>";
-
-                try
-                {
-                        if (!string.IsNullOrWhiteSpace(email))
-                        {
-                                await emailService.SendEmailAsync(email, "Goodbye from Gatherly", goodbyeEmailHtml);
-                        }
-                }
-                catch (Exception ex)
-                {
-                        Console.WriteLine($"Goodbye email sending failed: {ex.Message}");
-                }
-
-                await signInManager.SignOutAsync();
-                var result = await signInManager.UserManager.DeleteAsync(user);
-
-                if (result.Succeeded)
-                        return Ok(new { message = "Your account has been deleted." });
-
-                foreach (var error in result.Errors)
-                {
-                        ModelState.AddModelError(error.Code, error.Description);
-                }
-
-                return ValidationProblem();
-        }
+        return Ok(new { message = "Your account has been deleted." });
+    }
 
     [AllowAnonymous]
     [HttpPost("forgot-password")]
     public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
     {
-        // Always return Ok to prevent email enumeration attacks
-        var user = await signInManager.UserManager.FindByEmailAsync(dto.Email);
-
-        if (user == null || !user.EmailConfirmed)
-            return Ok(new { message = "If an account with that email exists, a reset link has been sent." });
-
-        var token = await signInManager.UserManager.GeneratePasswordResetTokenAsync(user);
-        var clientBaseUrl = configuration["AppSettings:ClientBaseUrl"] ?? configuration["AppUrl"] ?? "http://localhost:5173";
-        var resetUrl = $"{clientBaseUrl.TrimEnd('/')}/reset-password?userId={user.Id}&token={Uri.EscapeDataString(token)}";
-
-        var templateBuilder = new EmailTemplateBuilder(clientBaseUrl);
-        var htmlBody = templateBuilder.BuildPasswordResetEmail(user.DisplayName ?? user.Email!, resetUrl);
-
-        try
-        {
-            await emailService.SendEmailAsync(
-                user.Email!,
-                "Reset Your Password – Gatherly",
-                htmlBody);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Password reset email failed: {ex.Message}");
-        }
+        await Mediator.Send(new ForgotPassword.Command { Email = dto.Email });
 
         return Ok(new { message = "If an account with that email exists, a reset link has been sent." });
     }
@@ -216,19 +106,16 @@ public class AccountController(
     [HttpPost("reset-password")]
     public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
     {
-        var user = await signInManager.UserManager.FindByIdAsync(dto.UserId);
-        if (user == null)
-            return BadRequest("Invalid or expired reset link.");
+        var result = await Mediator.Send(new ResetPassword.Command
+        {
+            UserId = dto.UserId,
+            Token = dto.Token,
+            NewPassword = dto.NewPassword
+        });
 
-        var result = await signInManager.UserManager.ResetPasswordAsync(user, dto.Token, dto.NewPassword);
+        if (!result.IsSuccess) return HandleResult(result);
 
-        if (result.Succeeded)
-            return Ok(new { message = "Password has been reset successfully. You can now log in." });
-
-        foreach (var error in result.Errors)
-            ModelState.AddModelError(error.Code, error.Description);
-
-        return ValidationProblem();
+        return Ok(new { message = "Password has been reset successfully. You can now log in." });
     }
 
     [HttpPost("logout")]
