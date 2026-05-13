@@ -180,6 +180,57 @@ public class AccountController(
                 return ValidationProblem();
         }
 
+    [AllowAnonymous]
+    [HttpPost("forgot-password")]
+    public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+    {
+        // Always return Ok to prevent email enumeration attacks
+        var user = await signInManager.UserManager.FindByEmailAsync(dto.Email);
+
+        if (user == null || !user.EmailConfirmed)
+            return Ok(new { message = "If an account with that email exists, a reset link has been sent." });
+
+        var token = await signInManager.UserManager.GeneratePasswordResetTokenAsync(user);
+        var clientBaseUrl = configuration["AppSettings:ClientBaseUrl"] ?? configuration["AppUrl"] ?? "http://localhost:5173";
+        var resetUrl = $"{clientBaseUrl.TrimEnd('/')}/reset-password?userId={user.Id}&token={Uri.EscapeDataString(token)}";
+
+        var templateBuilder = new EmailTemplateBuilder(clientBaseUrl);
+        var htmlBody = templateBuilder.BuildPasswordResetEmail(user.DisplayName ?? user.Email!, resetUrl);
+
+        try
+        {
+            await emailService.SendEmailAsync(
+                user.Email!,
+                "Reset Your Password – Gatherly",
+                htmlBody);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Password reset email failed: {ex.Message}");
+        }
+
+        return Ok(new { message = "If an account with that email exists, a reset link has been sent." });
+    }
+
+    [AllowAnonymous]
+    [HttpPost("reset-password")]
+    public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    {
+        var user = await signInManager.UserManager.FindByIdAsync(dto.UserId);
+        if (user == null)
+            return BadRequest("Invalid or expired reset link.");
+
+        var result = await signInManager.UserManager.ResetPasswordAsync(user, dto.Token, dto.NewPassword);
+
+        if (result.Succeeded)
+            return Ok(new { message = "Password has been reset successfully. You can now log in." });
+
+        foreach (var error in result.Errors)
+            ModelState.AddModelError(error.Code, error.Description);
+
+        return ValidationProblem();
+    }
+
     [HttpPost("logout")]
     public async Task<ActionResult> Logout()
     {

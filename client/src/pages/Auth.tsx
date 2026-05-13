@@ -23,6 +23,7 @@ const Auth = () => {
   const { login, register } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const passwordReset = (location.state as { passwordReset?: boolean } | null)?.passwordReset ?? false;
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -103,6 +104,12 @@ const Auth = () => {
               ? "Log in to attend activities, comment, and manage your profile."
               : "Join the community and start creating activities."}
           </p>
+
+          {passwordReset && (
+            <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-sm text-emerald-700 dark:text-emerald-400">
+              Password reset successfully! You can now log in with your new password.
+            </div>
+          )}
         </motion.div>
 
         <motion.form
@@ -138,7 +145,14 @@ const Auth = () => {
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-2 block">Password</label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium">Password</label>
+              {mode === "login" && (
+                <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                  Forgot password?
+                </Link>
+              )}
+            </div>
             <Input
               type="password"
               value={password}

@@ -86,6 +86,43 @@ public class EmailTemplateBuilder
     }
 
     /// <summary>
+    /// Builds a password reset email
+    /// </summary>
+    public string BuildPasswordResetEmail(string displayName, string resetUrl)
+    {
+        var header = $@"
+<div class=""email-header"" style=""background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"">
+    <div style=""font-size: 48px; margin-bottom: 10px;"">🔑</div>
+    <h1 style=""margin: 0 0 8px 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;"">Gatherly</h1>
+    <p class=""tagline"">Password Reset Request</p>
+</div>";
+
+        var content = $@"
+<p class=""greeting"">Hi <strong>{displayName}</strong>,</p>
+
+<p class=""content"">We received a request to reset your Gatherly password. Click the button below to choose a new password.</p>
+
+<div style=""background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%); border: 1px solid #e0e7ff; border-radius: 12px; padding: 28px; margin: 24px 0; text-align: center;"">
+    <div style=""font-size: 36px; margin-bottom: 12px;"">🔐</div>
+    <h3 style=""margin: 0 0 8px 0; color: #4338ca; font-size: 18px;"">Reset your password</h3>
+    <p style=""margin: 0; color: #6b7280; font-size: 14px; line-height: 1.6;"">
+        This link will expire in <strong>1 hour</strong>.<br>
+        If you didn't request a password reset, you can safely ignore this email.
+    </p>
+</div>
+
+<p class=""content"" style=""font-size: 13px; color: #9ca3af; text-align: center;"">
+    For security, never share this link with anyone.
+</p>";
+
+        return BuildEmail(
+            header: header,
+            content: content,
+            mainCta: ("🔑 Reset My Password", resetUrl)
+        );
+    }
+
+    /// <summary>
     /// Builds a generic email without activity details
     /// </summary>
     public string BuildGenericEmail(GenericEmailData data, string ctaButtonText, string ctaButtonUrl, string? secondaryCtaText = null, string? secondaryCtaUrl = null)

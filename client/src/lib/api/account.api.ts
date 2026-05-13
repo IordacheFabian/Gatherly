@@ -52,4 +52,22 @@ export const accountApi = {
       return null;
     }
   },
+
+  forgotPassword: async (email: string): Promise<{ message: string }> => {
+    try {
+      const { data } = await apiClient.post<{ message: string }>("/api/account/forgot-password", { email });
+      return data;
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, "Failed to send reset email"));
+    }
+  },
+
+  resetPassword: async (userId: string, token: string, newPassword: string): Promise<{ message: string }> => {
+    try {
+      const { data } = await apiClient.post<{ message: string }>("/api/account/reset-password", { userId, token, newPassword });
+      return data;
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, "Password reset failed"));
+    }
+  },
 };
