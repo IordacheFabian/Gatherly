@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, MailCheck } from "lucide-react";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth-context";
 import { getErrorMessage } from "@/lib/error-utils";
+import { ApiError } from "@/lib/api";
 
 type Mode = "login" | "register";
 
@@ -19,6 +20,18 @@ const Auth = () => {
   const [submitting, setSubmitting] = useState(false);
   const [registered, setRegistered] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
+  const [rateLimitSeconds, setRateLimitSeconds] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (rateLimitSeconds === null || rateLimitSeconds <= 0) return;
+    const timer = setInterval(() => {
+      setRateLimitSeconds((s) => {
+        if (s === null || s <= 1) { clearInterval(timer); return null; }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [rateLimitSeconds]);
 
   const { login, register } = useAuth();
   const navigate = useNavigate();
@@ -41,7 +54,13 @@ const Auth = () => {
         setRegistered(true);
       }
     } catch (e) {
-      setError(getErrorMessage(e, "Authentication failed"));
+      if (e instanceof ApiError && e.status === 429) {
+        const secs = e.retryAfter ?? 900;
+        setRateLimitSeconds(secs);
+        setError(null);
+      } else {
+        setError(getErrorMessage(e, "Authentication failed"));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -164,9 +183,18 @@ const Auth = () => {
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 
+          {rateLimitSeconds !== null && (
+            <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-sm text-amber-700 dark:text-amber-400">
+              Too many attempts. Please try again in{" "}
+              <span className="font-semibold tabular-nums">
+                {Math.floor(rateLimitSeconds / 60)}:{String(rateLimitSeconds % 60).padStart(2, "0")}
+              </span>
+            </div>
+          )}
+
           <Button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || rateLimitSeconds !== null}
             className="w-full gradient-primary text-primary-foreground border-0"
           >
             {submitting

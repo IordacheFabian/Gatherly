@@ -488,6 +488,7 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 API/appsettings.json
+API/appsettings.Development.json
 API/gatherly.db
 API/gatherly.db-shm
 API/gatherly.db-wal

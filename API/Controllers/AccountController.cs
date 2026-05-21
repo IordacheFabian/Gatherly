@@ -1,15 +1,18 @@
 using API.DTOs;
 using Application.Account.Commands;
+using Application.Account.Queries;
 using Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace API.Controllers;
 
 public class AccountController(SignInManager<User> signInManager) : BaseApiController
 {
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     [HttpPost("register")]
     public async Task<ActionResult> RegisterUser(RegisterDto registerDto)
     {
@@ -26,6 +29,7 @@ public class AccountController(SignInManager<User> signInManager) : BaseApiContr
     }
 
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     [HttpPost("login")]
     public async Task<ActionResult> Login([FromBody] LoginDto loginDto)
     {
@@ -94,6 +98,7 @@ public class AccountController(SignInManager<User> signInManager) : BaseApiContr
     }
 
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     [HttpPost("forgot-password")]
     public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
     {
@@ -103,6 +108,7 @@ public class AccountController(SignInManager<User> signInManager) : BaseApiContr
     }
 
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     [HttpPost("reset-password")]
     public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
     {
@@ -124,5 +130,11 @@ public class AccountController(SignInManager<User> signInManager) : BaseApiContr
         await signInManager.SignOutAsync();
 
         return NoContent();
+    }
+
+    [HttpGet("export")]
+    public async Task<ActionResult<UserDataExportDto>> ExportData()
+    {
+        return HandleResult(await Mediator.Send(new ExportUserData.Query()));
     }
 }

@@ -27,4 +27,12 @@ export const paymentsApi = {
       throw new Error(getApiErrorMessage(error, "Failed to download receipt"));
     }
   },
+
+  cancelPending: async (activityId: string): Promise<void> => {
+    try {
+      await apiClient.post(`/api/payments/${activityId}/cancel-pending`);
+    } catch {
+      // Best-effort — ignore errors on cancel
+    }
+  },
 };

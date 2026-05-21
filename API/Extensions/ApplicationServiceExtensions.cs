@@ -94,6 +94,11 @@ public static class ApplicationServiceExtensions
         services.AddSingleton<IReceiptPdfGenerator, ReceiptPdfGenerator>();
         services.Configure<CloudinarySettings>(config.GetSection("CloudinarySettings"));
 
+        services.Configure<StripeSettings>(config.GetSection("Stripe"));
+        services.AddSingleton(sp =>
+            sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<StripeSettings>>().Value);
+        services.AddScoped<IStripeService, StripeService>();
+
         return services;
     }
 }

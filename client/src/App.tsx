@@ -28,6 +28,8 @@ import HostDashboard from "./pages/HostDashboard";
 import ConfirmEmail from "./pages/ConfirmEmail";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCancel from "./pages/PaymentCancel";
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -76,6 +78,8 @@ const App = () => (
               <Route path="/confirm-email" element={<ConfirmEmail />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/payment-success" element={<PaymentSuccess />} />
+              <Route path="/payment-cancel" element={<PaymentCancel />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AnimatePresence>

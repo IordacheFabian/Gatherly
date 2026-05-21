@@ -115,12 +115,10 @@ export function useActivityDetails(id: string | undefined, user: UserInfo | null
   });
 
   const checkoutMutation = useMutation({
-    mutationFn: () => activitiesApi.mockCheckout(id!),
-    onSuccess: async (session) => {
-      await queryClient.invalidateQueries({ queryKey: ["activity", id] });
-      await queryClient.invalidateQueries({ queryKey: ["activities"] });
-      await queryClient.invalidateQueries({ queryKey: ["payments", "history"] });
-      toast.success(`Mock Stripe checkout succeeded. Receipt ${session.paymentId.slice(0, 8)} created.`);
+    mutationFn: () => activitiesApi.checkout(id!),
+    onSuccess: (session) => {
+      // Redirect to Stripe hosted checkout page
+      window.location.href = session.checkoutUrl;
     },
   });
 

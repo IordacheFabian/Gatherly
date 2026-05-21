@@ -40,6 +40,11 @@ public class ReviewBooking
                 return Result<Unit>.Failure("Cannot review a cancelled booking", 400);
             }
 
+            if (booking.Status == BookingStatus.Pending && activity.PriceAmount > 0)
+            {
+                return Result<Unit>.Failure("Cannot approve a booking that is awaiting payment", 400);
+            }
+
             if (request.TargetStatus == BookingStatus.Approved)
             {
                 var approvedCount = activity.Attendees.Count(x => !x.IsHost && x.Status == BookingStatus.Approved);

@@ -3,11 +3,13 @@ import axios from "axios";
 export class ApiError extends Error {
   status: number;
   details?: unknown;
+  retryAfter?: number; // seconds until rate limit resets
 
-  constructor(message: string, status: number, details?: unknown) {
+  constructor(message: string, status: number, details?: unknown, retryAfter?: number) {
     super(message);
     this.status = status;
     this.details = details;
+    this.retryAfter = retryAfter;
   }
 }
 
@@ -21,7 +23,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (axios.isAxiosError(error) && error.response) {
-      const { data: payload, status } = error.response;
+      const { data: payload, status, headers } = error.response;
       const fieldErrors =
         typeof payload === "object" && payload !== null && "errors" in payload
           ? (payload as { errors?: Record<string, string[]> }).errors
@@ -34,7 +36,9 @@ apiClient.interceptors.response.use(
             : (payload as { detail?: string; title?: string })?.detail ||
               (payload as { title?: string })?.title ||
               "Request failed";
-      return Promise.reject(new ApiError(message, status, payload));
+      const retryAfterHeader = headers["retry-after"];
+      const retryAfter = retryAfterHeader ? parseInt(retryAfterHeader, 10) : undefined;
+      return Promise.reject(new ApiError(message, status, payload, retryAfter));
     }
     return Promise.reject(error);
   },

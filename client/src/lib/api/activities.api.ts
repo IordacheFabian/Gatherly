@@ -79,9 +79,9 @@ export const activitiesApi = {
     }
   },
 
-  mockCheckout: async (activityId: string): Promise<CheckoutSession> => {
+  checkout: async (activityId: string): Promise<CheckoutSession> => {
     try {
-      const { data } = await apiClient.post<CheckoutSession>(`/api/activities/${activityId}/checkout/mock`);
+      const { data } = await apiClient.post<CheckoutSession>(`/api/payments/${activityId}/checkout`);
       return data;
     } catch (error) {
       throw new Error(getApiErrorMessage(error, "Checkout failed"));

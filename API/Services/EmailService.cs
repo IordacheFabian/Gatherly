@@ -22,11 +22,6 @@ public class EmailService(
     private readonly EmailTemplateBuilder _templateBuilder = new(
         configuration["AppSettings:ClientBaseUrl"] ?? configuration["AppUrl"] ?? "http://localhost:5173");
 
-    // ============================================================
-    // Public API: thin wrappers that dispatch to the engine below.
-    // Signatures preserved for IEmailService backward compatibility.
-    // ============================================================
-
     public Task SendEmailAsync(string toEmail, string subject, string body, CancellationToken cancellationToken = default)
         => SendRawEmailAsync(toEmail, subject, body, attachments: null, cancellationToken);
 
